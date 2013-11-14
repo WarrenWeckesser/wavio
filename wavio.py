@@ -1,4 +1,4 @@
-# readwav.py
+# wavio.py
 # Author: Warren Weckesser
 # License: BSD 3-Clause (http://opensource.org/licenses/BSD-3-Clause)
 
@@ -46,3 +46,41 @@ def readwav(file):
     wav.close()
     array = _wav2array(nchannels, sampwidth, data)
     return rate, array
+
+
+def writewav24(filename, rate, data):
+    """Create a 24 bit wav file.
+
+    data must be "array-like", either 1- or 2-dimensional.  If it is 2-d,
+    the rows are the frames (i.e. samples) and the columns are the channels.
+
+    The data is assumed to be signed, and the values are assumed to be
+    within the range of a 24 bit integer.  Floating point values are
+    converted to integers.  The data is not rescaled or normalized before
+    writing it to the file.
+
+    Example: Create a 3 second 440 Hz sine wave.
+
+    >>> rate = 22050  # samples per second
+    >>> T = 3         # sample duration (seconds)
+    >>> f = 440.0     # sound frequency (Hz)
+    >>> t = np.linspace(0, T, T*rate, endpoint=False)
+    >>> x = (2**23 - 1) * np.sin(2 * np.pi * f * t)
+    >>> writewav24("sine24.wav", rate, x)
+
+    """
+    a32 = np.asarray(data, dtype=np.int32)
+    if a32.ndim == 1:
+        # Convert to a 2D array with a single column.
+        a32.shape = a32.shape + (1,)
+    # By shifting first 0 bits, then 8, then 16, the resulting output
+    # is 24 bit little-endian.
+    a8 = (a32.reshape(a32.shape + (1,)) >> np.array([0, 8, 16])) & 255
+    wavdata = a8.astype(np.uint8).tostring()
+
+    w = wave.open(filename, 'wb')
+    w.setnchannels(a32.shape[1])
+    w.setsampwidth(3)
+    w.setframerate(rate)
+    w.writeframes(wavdata)
+    w.close()
