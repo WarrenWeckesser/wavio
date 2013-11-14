@@ -33,7 +33,8 @@ def readwav(file):
     """
     Read a wav file.
 
-    Returns the frame rate and a numpy array containing the data.
+    Returns the frame rate, sample width (in bytes) and a numpy array
+    containing the data.
 
     This function does not read compressed wav files.
     """
@@ -45,7 +46,7 @@ def readwav(file):
     data = wav.readframes(nframes)
     wav.close()
     array = _wav2array(nchannels, sampwidth, data)
-    return rate, array
+    return rate, sampwidth, array
 
 
 def writewav24(filename, rate, data):
