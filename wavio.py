@@ -31,12 +31,31 @@ def _wav2array(nchannels, sampwidth, data):
 
 def readwav(file):
     """
-    Read a wav file.
+    Read a WAV file.
 
-    Returns the frame rate, sample width (in bytes) and a numpy array
-    containing the data.
+    Parameters
+    ----------
+    file : string or file object
+        Either the name of a file or an open file pointer.
 
-    This function does not read compressed wav files.
+    Return Values
+    -------------
+    rate : float
+        The sampling frequency (i.e. frame rate)
+    sampwidth : float
+        The sample width, in bytes.  E.g. for a 24 bit WAV file,
+        sampwidth is 3.
+    data : numpy array
+        The array containing the data.  The shape of the array is
+        (num_samples, num_channels).  num_channels is the number of
+        audio channels (1 for mono, 2 for stereo).
+
+    Notes
+    -----
+    This function uses the `wave` module of the Python standard libary
+    to read the WAV file, so it has the same limitations as that library.
+    In particular, the function does not read compressed WAV files.
+
     """
     wav = wave.open(file)
     rate = wav.getframerate()
@@ -50,17 +69,30 @@ def readwav(file):
 
 
 def writewav24(filename, rate, data):
-    """Create a 24 bit wav file.
+    """
+    Create a 24 bit wav file.
 
-    data must be "array-like", either 1- or 2-dimensional.  If it is 2-d,
-    the rows are the frames (i.e. samples) and the columns are the channels.
+    Parameters
+    ----------
+    filename : string
+        Name of the file to create.
+    rate : float
+        The sampling frequency (i.e. frame rate) of the data.
+    data : array-like collection of integer or floating point values
+        data must be "array-like", either 1- or 2-dimensional.  If it
+        is 2-d, the rows are the frames (i.e. samples) and the columns
+        are the channels.
 
+    Notes
+    -----
     The data is assumed to be signed, and the values are assumed to be
     within the range of a 24 bit integer.  Floating point values are
     converted to integers.  The data is not rescaled or normalized before
     writing it to the file.
 
-    Example: Create a 3 second 440 Hz sine wave.
+    Example
+    -------
+    Create a 3 second 440 Hz sine wave.
 
     >>> rate = 22050  # samples per second
     >>> T = 3         # sample duration (seconds)
