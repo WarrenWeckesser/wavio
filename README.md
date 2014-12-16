@@ -25,5 +25,5 @@ and 1.9.0, and will likely work with older versions.
 -----
 
 _Author_:     Warren Weckesser  <br />
-_Repository_: https://github.com/WarrenWeckesser/wavio/blob/master/wavio.py  <br />
+_Repository_: https://github.com/WarrenWeckesser/wavio  <br />
 _License_:    BSD 3-clause (http://opensource.org/licenses/BSD-3-Clause)     <br />
