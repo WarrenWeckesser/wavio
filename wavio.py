@@ -2,8 +2,8 @@
 # Author: Warren Weckesser
 # License: BSD 3-Clause (http://opensource.org/licenses/BSD-3-Clause)
 
-import wave
-import numpy as np
+import wave as _wave
+import numpy as _np
 
 
 def _wav2array(nchannels, sampwidth, data):
@@ -16,15 +16,15 @@ def _wav2array(nchannels, sampwidth, data):
         raise ValueError("sampwidth must not be greater than 4.")
 
     if sampwidth == 3:
-        a = np.empty((num_samples, nchannels, 4), dtype=np.uint8)
-        raw_bytes = np.fromstring(data, dtype=np.uint8)
+        a = _np.empty((num_samples, nchannels, 4), dtype=_np.uint8)
+        raw_bytes = _np.fromstring(data, dtype=_np.uint8)
         a[:, :, :sampwidth] = raw_bytes.reshape(-1, nchannels, sampwidth)
         a[:, :, sampwidth:] = (a[:, :, sampwidth - 1:sampwidth] >> 7) * 255
         result = a.view('<i4').reshape(a.shape[:-1])
     else:
         # 8 bit samples are stored as unsigned ints; others as signed ints.
         dt_char = 'u' if sampwidth == 1 else 'i'
-        a = np.fromstring(data, dtype='<%s%d' % (dt_char, sampwidth))
+        a = _np.fromstring(data, dtype='<%s%d' % (dt_char, sampwidth))
         result = a.reshape(-1, nchannels)
     return result
 
@@ -57,7 +57,7 @@ def readwav(file):
     In particular, the function does not read compressed WAV files.
 
     """
-    wav = wave.open(file)
+    wav = _wave.open(file)
     rate = wav.getframerate()
     nchannels = wav.getnchannels()
     sampwidth = wav.getsampwidth()
@@ -102,16 +102,16 @@ def writewav24(filename, rate, data):
     >>> writewav24("sine24.wav", rate, x)
 
     """
-    a32 = np.asarray(data, dtype=np.int32)
+    a32 = _np.asarray(data, dtype=_np.int32)
     if a32.ndim == 1:
         # Convert to a 2D array with a single column.
         a32.shape = a32.shape + (1,)
     # By shifting first 0 bits, then 8, then 16, the resulting output
     # is 24 bit little-endian.
-    a8 = (a32.reshape(a32.shape + (1,)) >> np.array([0, 8, 16])) & 255
-    wavdata = a8.astype(np.uint8).tostring()
+    a8 = (a32.reshape(a32.shape + (1,)) >> _np.array([0, 8, 16])) & 255
+    wavdata = a8.astype(_np.uint8).tostring()
 
-    w = wave.open(filename, 'wb')
+    w = _wave.open(filename, 'wb')
     w.setnchannels(a32.shape[1])
     w.setsampwidth(3)
     w.setframerate(rate)
