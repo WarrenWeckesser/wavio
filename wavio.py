@@ -6,6 +6,9 @@ import wave as _wave
 import numpy as _np
 
 
+__version__ = "0.0.1"
+
+
 def _wav2array(nchannels, sampwidth, data):
     """data must be the string containing the bytes from the wav file."""
     num_samples, remainder = divmod(len(data), sampwidth * nchannels)
