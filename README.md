@@ -16,7 +16,7 @@ As of version 0.15.0 of scipy, the functions in `scipy.io.wavfile` do not suppor
 24 bit files.  When the sample depth is 24 bits, the data is returned in a 32 bit
 numpy array.
 
-`wavio` has been tested with Python versions 2.7 and 3.4.  It will likely
+`wavio` has been tested with Python versions 2.7, 3.4 and 3.5.  It will likely
 work with older versions.
 
 `wavio` depends on numpy (http://www.numpy.org).  It has been tested with versions 1.8.1
