@@ -25,6 +25,7 @@ setup(
     author='Warren Weckesser',
     description=("Read and write 24 bit WAV files with numpy arrays."),
     license="BSD",
+    url="https://github.com/WarrenWeckesser/wavio",
     classifiers=[
         "License :: OSI Approved :: BSD License",
         "Intended Audience :: Developers",
