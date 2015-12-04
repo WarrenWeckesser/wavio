@@ -262,6 +262,15 @@ def write(file, data, rate, scale=None, sampwidth=None):
         The string "dtype-limits" is not allowed when the `data` is a
         floating point array.
 
+        If using `scale` results in values that exceed the limits of the
+        output sample width, the data is clipped.  For example, the
+        following code::
+
+            >>> x = np.array([-100, 0, 100, 200, 300, 325])
+            >>> wavio.write('foo.wav', x, 8000, scale='none', sampwidth=1)
+
+        will write the values [0, 0, 100, 200, 255, 255] to the file.
+
     Example
     -------
     Create a 3 second 440 Hz sine wave, and save it in a 24-bit WAV file.
