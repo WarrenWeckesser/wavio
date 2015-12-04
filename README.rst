@@ -40,5 +40,5 @@ a three second 440 Hz sine wave to a WAV file::
 -----
 
 :Author:     Warren Weckesser
-:Repository: ``https://github.com/WarrenWeckesser/wavio``
-:License:    BSD 2-clause (``http://opensource.org/licenses/BSD-2-Clause``)
+:Repository: https://github.com/WarrenWeckesser/wavio
+:License:    BSD 2-clause (http://opensource.org/licenses/BSD-2-Clause)

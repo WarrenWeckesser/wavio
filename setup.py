@@ -1,4 +1,5 @@
 from setuptools import setup
+from os import path
 
 
 def get_wavio_version():
@@ -18,23 +19,24 @@ def get_wavio_version():
             if len(s) == 2 and s[0] == "__version__":
                 return s[1][1:-1]
 
+# Get the long description from README.rst.
+_here = path.abspath(path.dirname(__file__))
+with open(path.join(_here, 'README.rst')) as f:
+    _long_description = f.read()
 
 setup(
     name='wavio',
     version=get_wavio_version(),
     author='Warren Weckesser',
     description=("Read and write 24 bit WAV files with numpy arrays."),
+    long_description=_long_description,
     license="BSD",
     url="https://github.com/WarrenWeckesser/wavio",
     classifiers=[
         "License :: OSI Approved :: BSD License",
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
     ],
