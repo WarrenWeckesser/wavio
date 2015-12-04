@@ -44,7 +44,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.2.dev2"
+__version__ = "0.0.2.dev3"
 
 
 def _wav2array(nchannels, sampwidth, data):
@@ -189,9 +189,7 @@ def _scale_to_sampwidth(data, sampwidth, vmin, vmax):
         data = _np.zeros(data.shape, dtyp=dt)
     else:
         outmin, outmax = _sampwidth_ranges[sampwidth]
-        if outmin == vmin and outmax == vmax:
-            data = data.astype(dt)
-        else:
+        if outmin != vmin or outmax != vmax:
             data = ((float(outmax - outmin)) * (data - vmin) /
                     (vmax - vmin)).astype(_np.int64) + outmin
             data[data == outmax] = outmax - 1
