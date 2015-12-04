@@ -44,7 +44,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.2"
+__version__ = "0.0.3.dev0"
 
 
 def _wav2array(nchannels, sampwidth, data):
