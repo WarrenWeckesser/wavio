@@ -17,14 +17,14 @@ written to the WAV file.)  The functions can read and write 8-, 16-, 24- and
 
 ``wavio`` has been tested with Python versions 2.7, 3.4 and 3.5.
 
-``wavio`` depends on numpy (``http://www.numpy.org``).  It has been tested with versions
+``wavio`` depends on numpy (http://www.numpy.org).  It has been tested with versions
 1.8.1, 1.9.0 and 1.10.1, and will likely work with older versions.
 
 Example
 ~~~~~~~
 
 The following code (also found in the docstring of ``wavio.write``) writes
-a three second 440 Hz sine wave to a WAV file::
+a three second 440 Hz sine wave to a 24-bit WAV file::
 
     import numpy as np
     import wavio
