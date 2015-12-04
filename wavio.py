@@ -44,7 +44,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.2.dev3"
+__version__ = "0.0.2.dev4"
 
 
 def _wav2array(nchannels, sampwidth, data):
@@ -198,7 +198,7 @@ def _scale_to_sampwidth(data, sampwidth, vmin, vmax):
     return data
 
 
-def write(filename, data, rate, scale=None, sampwidth=None):
+def write(file, data, rate, scale=None, sampwidth=None):
     """
     Write the numpy array `data` to a WAV file.
 
@@ -211,8 +211,8 @@ def write(filename, data, rate, scale=None, sampwidth=None):
 
     Parameters
     ----------
-    filename : string
-        Name of the file to create.
+    file : string, or file object open for writing in binary mode
+        Either the name of a file or an open file pointer.
     data : numpy array, 1- or 2-dimensional, integer or floating point
         If it is 2-d, the rows are the frames (i.e. samples) and the
         columns are the channels.
@@ -362,7 +362,7 @@ def write(filename, data, rate, scale=None, sampwidth=None):
 
     wavdata = _array2wav(data, sampwidth)
 
-    w = _wave.open(filename, 'wb')
+    w = _wave.open(file, 'wb')
     w.setnchannels(data.shape[1])
     w.setsampwidth(sampwidth)
     w.setframerate(rate)
