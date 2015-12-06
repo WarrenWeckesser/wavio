@@ -44,7 +44,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.3.dev0"
+__version__ = "0.0.3.dev1"
 
 
 def _wav2array(nchannels, sampwidth, data):
@@ -118,6 +118,11 @@ class Wav(object):
         self.data = data
         self.rate = rate
         self.sampwidth = sampwidth
+
+    def __repr__(self):
+        s = ("Wav(data.shape=%s, data.dtype=%s, rate=%r, sampwidth=%r)" %
+             (self.data.shape, self.data.dtype, self.rate, self.sampwidth))
+        return s
 
 
 def read(file):
