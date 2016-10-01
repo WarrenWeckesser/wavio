@@ -193,6 +193,31 @@ class TestWavio(unittest.TestCase):
             os.remove(filename)
             os.removedirs(path)
 
+    def test_vmin_equal_vmax(self):
+        path = tempfile.mkdtemp()
+        filename = os.path.join(path, "testdata.wav")
+        data = np.array([-100, 0, 100, 200, 300, 325])
+
+        wavio.write(filename, data, 44100, sampwidth=1, scale=(200, 200))
+        try:
+            f = wave.open(filename, 'r')
+            self.assertEqual(f.getnchannels(), 1)
+            self.assertEqual(f.getsampwidth(), 1)
+            self.assertEqual(f.getframerate(), 44100)
+            f.close()
+
+            w = wavio.read(filename)
+            self.assertEqual(w.rate, 44100)
+            self.assertEqual(w.sampwidth, 1)
+            self.assertEqual(w.data.dtype, np.uint8)
+            self.assertEqual(w.data.shape, (len(data), 1))
+            expected = np.array([0, 0, 0, 0, 0, 0],
+                                dtype=np.uint8).reshape(-1, 1)
+            np.testing.assert_equal(w.data, expected)
+        finally:
+            os.remove(filename)
+            os.removedirs(path)
+
 
 if __name__ == '__main__':
     unittest.main()

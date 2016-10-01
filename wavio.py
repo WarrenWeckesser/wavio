@@ -44,7 +44,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.4.dev0"
+__version__ = "0.0.4.dev1"
 
 
 def _wav2array(nchannels, sampwidth, data):
@@ -191,7 +191,7 @@ def _scale_to_sampwidth(data, sampwidth, vmin, vmax):
 
     dt = _sampwidth_dtypes[sampwidth]
     if vmax == vmin:
-        data = _np.zeros(data.shape, dtyp=dt)
+        data = _np.zeros(data.shape, dtype=dt)
     else:
         outmin, outmax = _sampwidth_ranges[sampwidth]
         if outmin != vmin or outmax != vmax:
@@ -254,7 +254,8 @@ def write(file, data, rate, scale=None, sampwidth=None):
         case the given values override the use of `data.min()` and
         `data.max()` for `vmin` and `vmax` shown above.  (If either value
         is `None`, the value shown above is used.)  Data outside the
-        range (vmin, vmax) is clipped.
+        range (vmin, vmax) is clipped.  If `vmin == vmax`, the output is
+        all zeros.
 
         If `scale` is the string "none", then `vmin` and `vmax` are set to
         `outmin` and `outmax`, respectively. This means the data is written
