@@ -160,6 +160,10 @@ def read(file):
     The array returned by `wavio.read` is alway two-dimensional.  If the
     WAV data is mono, the array will have shape (num_samples, 1).
 
+    `wavio.read()` does not scale or normalize the data.  The data in the
+    array `wav.data` is the data that was in the file.  When the file
+    contains 24 bit samples, the resulting numpy array is 32 bit integers,
+    with values that have been sign-extended.
     """
     wav = _wave.open(file)
     rate = wav.getframerate()
