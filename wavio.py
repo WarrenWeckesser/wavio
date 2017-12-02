@@ -1,7 +1,7 @@
 """
 The wavio module defines the functions:
 
-read(file)
+read(filename)
     Read a WAV file and return a `wavio.Wav` object, with attributes
     `data`, `rate` and `sampwidth`.
 
@@ -44,7 +44,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.4.dev1"
+__version__ = "0.0.5.dev1"
 
 
 def _wav2array(nchannels, sampwidth, data):
@@ -125,13 +125,13 @@ class Wav(object):
         return s
 
 
-def read(file):
+def read(filename):
     """
     Read a WAV file.
 
     Parameters
     ----------
-    file : string or file object
+    filename : string or file object
         Either the name of a file or an open file pointer.
 
     Returns
@@ -165,7 +165,7 @@ def read(file):
     contains 24 bit samples, the resulting numpy array is 32 bit integers,
     with values that have been sign-extended.
     """
-    wav = _wave.open(file)
+    wav = wave.open(filename)
     rate = wav.getframerate()
     nchannels = wav.getnchannels()
     sampwidth = wav.getsampwidth()
@@ -207,7 +207,7 @@ def _scale_to_sampwidth(data, sampwidth, vmin, vmax):
     return data
 
 
-def write(file, data, rate, scale=None, sampwidth=None):
+def write(filename, data, rate, scale=None, sampwidth=None):
     """
     Write the numpy array `data` to a WAV file.
 
@@ -220,7 +220,7 @@ def write(file, data, rate, scale=None, sampwidth=None):
 
     Parameters
     ----------
-    file : string, or file object open for writing in binary mode
+    filename : string, or file object open for writing in binary mode
         Either the name of a file or an open file pointer.
     data : numpy array, 1- or 2-dimensional, integer or floating point
         If it is 2-d, the rows are the frames (i.e. samples) and the
@@ -381,7 +381,7 @@ def write(file, data, rate, scale=None, sampwidth=None):
 
     wavdata = _array2wav(data, sampwidth)
 
-    w = _wave.open(file, 'wb')
+    w = _wave.open(filename, 'wb')
     w.setnchannels(data.shape[1])
     w.setsampwidth(sampwidth)
     w.setframerate(rate)

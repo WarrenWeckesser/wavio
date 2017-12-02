@@ -41,6 +41,15 @@ a three second 440 Hz sine wave to a 24-bit WAV file::
     wavio.write("sine24.wav", x, rate, sampwidth=3)
 
 
+API:
+
+wavio.read(filename)
+    Read a WAV file and return a `wavio.Wav` object, with attributes
+    `data`, `rate` and `sampwidth`.
+
+wavio.write(filename, data, rate, scale=None, sampwidth=None)
+    Write a numpy array to a WAV file.
+
 -----
 
 :Author:     Warren Weckesser
