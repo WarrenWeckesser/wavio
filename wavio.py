@@ -57,16 +57,19 @@ def _wav2array(nchannels, sampwidth, data):
         raise ValueError("sampwidth must not be greater than 4.")
 
     if sampwidth == 3:
+        print("Channels 1: ", nchannels)
         a = _np.empty((num_samples, nchannels, 4), dtype=_np.uint8)
         raw_bytes = _np.fromstring(data, dtype=_np.uint8)
         a[:, :, :sampwidth] = raw_bytes.reshape(-1, nchannels, sampwidth)
         a[:, :, sampwidth:] = (a[:, :, sampwidth - 1:sampwidth] >> 7) * 255
         result = a.view('<i4').reshape(a.shape[:-1])
     else:
+        print("Channels 2: ", nchannels)
         # 8 bit samples are stored as unsigned ints; others as signed ints.
         dt_char = 'u' if sampwidth == 1 else 'i'
         a = _np.fromstring(data, dtype='<%s%d' % (dt_char, sampwidth))
         result = a.reshape(-1, nchannels)
+
     return result
 
 
@@ -165,13 +168,13 @@ def read(filename):
     contains 24 bit samples, the resulting numpy array is 32 bit integers,
     with values that have been sign-extended.
     """
-    wav = wave.open(filename)
-    rate = wav.getframerate()
-    nchannels = wav.getnchannels()
-    sampwidth = wav.getsampwidth()
-    nframes = wav.getnframes()
-    data = wav.readframes(nframes)
-    wav.close()
+    with _wave.open(filename) as wav:
+        rate = wav.getframerate()
+        nchannels = wav.getnchannels()
+        sampwidth = wav.getsampwidth()
+        nframes = wav.getnframes()
+        data = wav.readframes(nframes)
+
     array = _wav2array(nchannels, sampwidth, data)
     w = Wav(data=array, rate=rate, sampwidth=sampwidth)
     return w
@@ -190,18 +193,23 @@ _sampwidth_ranges = {1: (0, 256),
 def _scale_to_sampwidth(data, sampwidth, vmin, vmax):
     # Scale and translate the values to fit the range of the data type
     # associated with the given sampwidth.
-
     data = data.clip(vmin, vmax)
+    vmin=vmin.astype(_np.int64)
+    vmax=vmax.astype(_np.int64)
 
     dt = _sampwidth_dtypes[sampwidth]
     if vmax == vmin:
         data = _np.zeros(data.shape, dtype=dt)
+
     else:
         outmin, outmax = _sampwidth_ranges[sampwidth]
+
         if outmin != vmin or outmax != vmax:
-            data = ((float(outmax - outmin)) * (data - vmin) /
-                    (vmax - vmin)).astype(_np.int64) + outmin
+            data = (float(outmax - outmin) * (data - vmin) /
+                (vmax - vmin)).astype(_np.int64) + outmin
+
             data[data == outmax] = outmax - 1
+
         data = data.astype(dt)
 
     return data
@@ -381,9 +389,8 @@ def write(filename, data, rate, scale=None, sampwidth=None):
 
     wavdata = _array2wav(data, sampwidth)
 
-    w = _wave.open(filename, 'wb')
-    w.setnchannels(data.shape[1])
-    w.setsampwidth(sampwidth)
-    w.setframerate(rate)
-    w.writeframes(wavdata)
-    w.close()
+    with _wave.open(filename, 'wb') as w:
+        w.setnchannels(data.shape[1])
+        w.setsampwidth(sampwidth)
+        w.setframerate(rate)
+        w.writeframes(wavdata)
