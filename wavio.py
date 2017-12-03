@@ -57,7 +57,6 @@ def _wav2array(nchannels, sampwidth, data):
         raise ValueError("sampwidth must not be greater than 4.")
 
     if sampwidth == 3:
-        print("Channels 1: ", nchannels)
         a = _np.empty((num_samples, nchannels, 4), dtype=_np.uint8)
         raw_bytes = _np.fromstring(data, dtype=_np.uint8)
         a[:, :, :sampwidth] = raw_bytes.reshape(-1, nchannels, sampwidth)
