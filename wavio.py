@@ -63,7 +63,6 @@ def _wav2array(nchannels, sampwidth, data):
         a[:, :, sampwidth:] = (a[:, :, sampwidth - 1:sampwidth] >> 7) * 255
         result = a.view('<i4').reshape(a.shape[:-1])
     else:
-        print("Channels 2: ", nchannels)
         # 8 bit samples are stored as unsigned ints; others as signed ints.
         dt_char = 'u' if sampwidth == 1 else 'i'
         a = _np.fromstring(data, dtype='<%s%d' % (dt_char, sampwidth))
