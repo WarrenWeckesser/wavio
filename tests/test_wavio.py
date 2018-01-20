@@ -3,6 +3,7 @@ import unittest
 import contextlib
 import tempfile
 import os
+import shutil
 import wave
 import numpy as np
 import wavio
@@ -10,9 +11,14 @@ import wavio
 
 @contextlib.contextmanager
 def temporary_filepath(filename):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        fullname = os.path.join(tmpdir, filename)
+    # When support for Python 2.7 is dropped, this code can be simplified
+    # by using tempfile.TemporaryDirectory().
+    tmpdir = tempfile.mkdtemp()
+    fullname = os.path.join(tmpdir, filename)
+    try:
         yield fullname
+    finally:
+        shutil.rmtree(tmpdir)
 
 
 data1 = np.array([1, -2,
@@ -26,10 +32,13 @@ data1 = np.array([1, -2,
 class TestWavio(unittest.TestCase):
 
     def check_basic(self, filename, nchannels, sampwidth, framerate):
-        with wave.open(filename, 'r') as f:
+        f = wave.open(filename, 'r')
+        try:
             self.assertEqual(f.getnchannels(), nchannels)
             self.assertEqual(f.getsampwidth(), sampwidth)
             self.assertEqual(f.getframerate(), framerate)
+        finally:
+            f.close()
 
     def check_wavio_read(self, filename, rate, sampwidth, dtype, shape, data):
         w = wavio.read(filename)
