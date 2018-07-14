@@ -58,14 +58,14 @@ def _wav2array(nchannels, sampwidth, data):
 
     if sampwidth == 3:
         a = _np.empty((num_samples, nchannels, 4), dtype=_np.uint8)
-        raw_bytes = _np.fromstring(data, dtype=_np.uint8)
+        raw_bytes = _np.frombuffer(data, dtype=_np.uint8)
         a[:, :, :sampwidth] = raw_bytes.reshape(-1, nchannels, sampwidth)
         a[:, :, sampwidth:] = (a[:, :, sampwidth - 1:sampwidth] >> 7) * 255
         result = a.view('<i4').reshape(a.shape[:-1])
     else:
         # 8 bit samples are stored as unsigned ints; others as signed ints.
         dt_char = 'u' if sampwidth == 1 else 'i'
-        a = _np.fromstring(data, dtype='<%s%d' % (dt_char, sampwidth))
+        a = _np.frombuffer(data, dtype='<%s%d' % (dt_char, sampwidth))
         result = a.reshape(-1, nchannels)
     return result
 
