@@ -12,3 +12,11 @@ testpy36:
   - apt-get update -qy
   - pip install .
   - python tests/test_wavio.py
+
+
+testpy37:
+  image: python:3.7
+  script:
+  - apt-get update -qy
+  - pip install .
+  - python tests/test_wavio.py
