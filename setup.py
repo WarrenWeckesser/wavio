@@ -19,6 +19,7 @@ def get_wavio_version():
             if len(s) == 2 and s[0] == "__version__":
                 return s[1][1:-1]
 
+
 # Get the long description from README.rst.
 _here = path.abspath(path.dirname(__file__))
 with open(path.join(_here, 'README.rst')) as f:
@@ -42,6 +43,8 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
     ],
     keywords="wav numpy",
     py_modules=["wavio"],
