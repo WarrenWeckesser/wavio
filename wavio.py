@@ -157,7 +157,7 @@ def read(file):
     In particular, the function does not read compressed WAV files, and
     it does not read files with floating point data.
 
-    The array returned by `wavio.read` is alway two-dimensional.  If the
+    The array returned by `wavio.read` is always two-dimensional.  If the
     WAV data is mono, the array will have shape (num_samples, 1).
 
     `wavio.read()` does not scale or normalize the data.  The data in the
