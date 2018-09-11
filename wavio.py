@@ -44,7 +44,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.5.dev0"
+__version__ = "0.0.5.dev1"
 
 
 def _wav2array(nchannels, sampwidth, data):
@@ -265,8 +265,8 @@ def write(file, data, rate, scale=None, sampwidth=None):
 
         If `scale` is the string "none", then `vmin` and `vmax` are set to
         `outmin` and `outmax`, respectively. This means the data is written
-        to the file with no scaling.  (Note: `scaling="none" is not the same
-        as `scaling=None`.  The latter means "use the default behavior",
+        to the file with no scaling.  (Note: `scale="none" is not the same
+        as `scale=None`.  The latter means "use the default behavior",
         which is to scale by the data minimum and maximum.)
 
         If `scale` is the string "dtype-limits", then `vmin` and `vmax`
