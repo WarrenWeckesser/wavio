@@ -42,6 +42,7 @@ from __future__ import division as _division
 
 import wave as _wave
 import numpy as _np
+import warnings
 
 
 __version__ = "0.0.5.dev1"
@@ -125,7 +126,7 @@ class Wav(object):
         return s
 
 
-def read(file):
+def read(file, start_seconds=0, end_seconds=-1):
     """
     Read a WAV file.
 
@@ -133,6 +134,10 @@ def read(file):
     ----------
     file : string or file object
         Either the name of a file or an open file pointer.
+    start_seconds : float start_time in seconds
+        Default value = 0
+    end_seconds : float end_time in seconds.
+        Default -1 meaning read to end
 
     Returns
     -------
@@ -170,7 +175,22 @@ def read(file):
     nchannels = wav.getnchannels()
     sampwidth = wav.getsampwidth()
     nframes = wav.getnframes()
-    data = wav.readframes(nframes)
+
+    frame_start = int(start_seconds * rate)
+    if frame_start>nframes:
+        raise ValueError('Start time t_start is longer than the audio clip length.')
+    wav.setpos(frame_start)
+
+    if end_seconds == -1:
+        frame_end = nframes - frame_start
+    else:
+        frame_end = int(end_seconds * rate)
+        if frame_end > nframes:
+            frame_end = nframes
+            warnings.warn('End time was longer than clip_length. Returning data up to the end of file.')
+        frame_end = frame_end - frame_start
+
+    data = wav.readframes(frame_end)
     wav.close()
     array = _wav2array(nchannels, sampwidth, data)
     w = Wav(data=array, rate=rate, sampwidth=sampwidth)
