@@ -105,9 +105,20 @@ class Wav(object):
     Object returned by `wavio.read`.  Attributes are:
 
     data : numpy array
-        The array of data read from the WAV file.
+        The array of data read from the WAV file. The shape of the array
+        is (num_samples, num_channels).  num_channels is the number of audio
+        channels (1 for mono, 2 for stereo).   The data type of the array
+        (i.e. data.dtype) is determined by `sampwidth`::
+
+                sampwidth      dtype
+                    1          numpy.uint8
+                    2          numpy.int16
+                    3          numpy.int32
+                    4          numpy.int32
+
     rate : float
-        The sample rate of the WAV file.
+        The sampling frequency (i.e. frame rate or sample rate) of the
+        WAV file.
     sampwidth : int
         The sample width (i.e. number of bytes per sample) of the WAV file.
         For example, `sampwidth == 3` is a 24 bit WAV file.
@@ -141,14 +152,24 @@ def read(file):
         with the following attributes:
 
             data : numpy array
-                The array containing the data.  The shape of the array
-                is (num_samples, num_channels).  num_channels is the
-                number of audio channels (1 for mono, 2 for stereo).
+                The array of data read from the WAV file.  The shape of the
+                array is (num_samples, num_channels).  num_channels is the
+                number of audio channels (1 for mono, 2 for stereo).  The
+                data type of the array (i.e. data.dtype) is determined by
+                `sampwidth`::
+
+                    sampwidth      dtype
+                        1          numpy.uint8
+                        2          numpy.int16
+                        3          numpy.int32
+                        4          numpy.int32
+
             rate : float
-                The sampling frequency (i.e. frame rate)
+                The sampling frequency (i.e. frame rate or sample rate) of the
+                WAV file.
             sampwidth : float
-                The sample width, in bytes.  E.g. for a 24 bit WAV file,
-                sampwidth is 3.
+                The sample width (i.e. number of bytes per sample) of the
+                WAV file.  For example, `sampwidth == 3` is a 24 bit WAV file.
 
     Notes
     -----
