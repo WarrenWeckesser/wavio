@@ -8,7 +8,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.7]
+        python-version: [3.6, 3.7, 3.8]
         numpy-version: [1.17.5, 1.18.4]
 
     steps:
@@ -27,9 +27,4 @@ jobs:
         python -m pip install .
     - name: Test with pytest
       run: |
-        # cd ../..
-        # pwd
-        # export LOCATION=`python -c "import wavio, os; print(os.path.dirname(wavio.__file__))"`
-        # echo $LOCATION
-        # python -m pytest $LOCATION
         python -m pytest
