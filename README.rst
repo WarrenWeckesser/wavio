@@ -15,7 +15,7 @@ point data is passed to ``wavio.write`` it is converted to integers before
 being written to the WAV file.)  The functions can read and write 8-, 16-, 24-
 and 32-bit integer WAV files.
 
-``wavio`` has been tested with Python versions 2.7 and 3.4 to 3.8.
+``wavio`` has been tested with Python versions 2.7 and 3.4 to 3.9.
 
 ``wavio`` depends on numpy (http://www.numpy.org).
 
