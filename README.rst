@@ -17,7 +17,8 @@ and 32-bit integer WAV files.
 
 ``wavio`` has been tested with Python versions 2.7 and 3.4 to 3.9.
 
-``wavio`` depends on numpy (http://www.numpy.org).
+``wavio`` depends on numpy (http://www.numpy.org).  NumPy version 1.9.0 or later
+is required.
 
 The package has a suite of unit tests, but it should still be considered
 prototype-quality software.  There may be backwards-incompatible API changes

@@ -46,10 +46,12 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     keywords="wav numpy",
     py_modules=["wavio"],
     install_requires=[
-        'numpy >= 1.6.0',
+        'numpy >= 1.9.0',
     ],
 )
