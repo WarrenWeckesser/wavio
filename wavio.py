@@ -91,12 +91,12 @@ def _array2wav(a, sampwidth):
         # By shifting first 0 bits, then 8, then 16, the resulting output
         # is 24 bit little-endian.
         a8 = (a.reshape(a.shape + (1,)) >> _np.array([0, 8, 16])) & 255
-        wavdata = a8.astype(_np.uint8).tostring()
+        wavdata = a8.astype(_np.uint8).tobytes()
     else:
         # Make sure the array is little-endian, and then convert using
-        # tostring()
+        # tobytes().
         a = a.astype('<' + a.dtype.str[1:], copy=False)
-        wavdata = a.tostring()
+        wavdata = a.tobytes()
     return wavdata
 
 
