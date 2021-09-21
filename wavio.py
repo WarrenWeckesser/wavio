@@ -295,6 +295,11 @@ def write(file, data, rate, scale=None, sampwidth=None):
         The string "dtype-limits" is not allowed when the `data` is a
         floating point array.
 
+        If `scale` is the string "normalize", then data is normalized to
+        the full range of the output format while avoiding a DC offset
+        introduced by the default behavior (i.e. for asymmetric signals
+        zero value stays at zero).
+
         If using `scale` results in values that exceed the limits of the
         output sample width, the data is clipped.  For example, the
         following code::
