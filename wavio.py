@@ -375,6 +375,11 @@ def write(file, data, rate, scale=None, sampwidth=None):
             vmin = ii.min
             vmax = ii.max
             data = _scale_to_sampwidth(data, sampwidth, vmin, vmax)
+    elif scale == "normalize":
+        analog_zero = (outmin + outmax) / 2
+        centered_data = data - analog_zero
+        halfrange = max(abs(centered_data.min()), abs(centered_data.max()))
+        data = _scale_to_sampwidth(data, sampwidth, vmin=analog_zero - halfrange, vmax=analog_zero + halfrange)
     else:
         if scale is None:
             vmin = data.min()
