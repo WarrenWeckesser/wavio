@@ -236,6 +236,21 @@ class TestWavio(unittest.TestCase):
                                   dtype=np.int32, shape=(len(data_read), 1),
                                   data=data_read.reshape(-1, 1))
 
+    def test_write_24bit_with_normalization(self):
+        with temporary_filepath("testdata.wav") as filename:
+            data_written = np.array([0, 2**14, -2**14, 2**21],
+                                    dtype=np.int32)
+            data_read = np.array([0, 2**16, -2**16, 2**23 - 1],
+                                 dtype=np.int32)
+
+            wavio.write(filename, data_written, 44100, scale="normalize", sampwidth=3)
+
+            self.check_basic(filename, nchannels=1, sampwidth=3,
+                             framerate=44100)
+            self.check_wavio_read(filename, rate=44100, sampwidth=3,
+                                  dtype=np.int32, shape=(len(data_read), 1),
+                                  data=data_read.reshape(-1, 1))
+
     def test_write_8bit_with_normalization(self):
         with temporary_filepath("testdata.wav") as filename:
             data_written = np.array([128, 129, 140, 100, 128],
