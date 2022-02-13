@@ -116,7 +116,7 @@ class Wav(object):
                     3          numpy.int32
                     4          numpy.int32
 
-    rate : float
+    rate : int
         The sampling frequency (i.e. frame rate or sample rate) of the
         WAV file.
     sampwidth : int
@@ -164,10 +164,10 @@ def read(file):
                         3          numpy.int32
                         4          numpy.int32
 
-            rate : float
+            rate : int
                 The sampling frequency (i.e. frame rate or sample rate) of the
                 WAV file.
-            sampwidth : float
+            sampwidth : int
                 The sample width (i.e. number of bytes per sample) of the
                 WAV file.  For example, `sampwidth == 3` is a 24 bit WAV file.
 
@@ -248,7 +248,7 @@ def write(file, data, rate, scale=None, sampwidth=None):
     data : numpy array, 1- or 2-dimensional, integer or floating point
         If it is 2-d, the rows are the frames (i.e. samples) and the
         columns are the channels.
-    rate : float
+    rate : int
         The sampling frequency (i.e. frame rate) of the data.
     sampwidth : int, optional
         The sample width, in bytes, of the output file.
