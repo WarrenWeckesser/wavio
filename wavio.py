@@ -12,7 +12,7 @@ write(filename, data, rate, scale=None, sampwidth=None)
 -----
 Author: Warren Weckesser
 License: BSD 2-Clause:
-Copyright (c) 2015, Warren Weckesser
+Copyright (c) 2015-2022, Warren Weckesser
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -38,13 +38,30 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 """
 
-from __future__ import division as _division
-
+import warnings as _warnings
 import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.5.dev2"
+__version__ = "0.0.5.dev3"
+
+
+class ClippedDataWarning(UserWarning):
+
+    def __init__(self, message=None):
+        if message is None:
+            message = ('Some data values were clipped when converted to the '
+                       'output format.')
+        self.args = (message,)
+
+
+class ClippedDataError(RuntimeError):
+
+    def __init__(self, message=None):
+        if message is None:
+            message = ('Some data values were clipped when converted to the '
+                       'output format.')
+        self.args = (message,)
 
 
 def _wav2array(nchannels, sampwidth, data):
@@ -202,44 +219,80 @@ _sampwidth_dtypes = {1: _np.uint8,
                      2: _np.int16,
                      3: _np.int32,
                      4: _np.int32}
-_sampwidth_ranges = {1: (0, 256),
-                     2: (-2**15, 2**15),
-                     3: (-2**23, 2**23),
-                     4: (-2**31, 2**31)}
+_sampwidth_minmax = {1: (0, 255),
+                     2: (-2**15, 2**15 - 1),
+                     3: (-2**23, 2**23 - 1),
+                     4: (-2**31, 2**31 - 1)}
 
 
-def _scale_to_sampwidth(data, sampwidth, vmin, vmax):
-    # Scale and translate the values to fit the range of the data type
-    # associated with the given sampwidth.
+def _float_to_integer(x, sampwidth, scale=None, clip="warn"):
 
-    data = data.clip(vmin, vmax)
+    # For a given sampwidth and scale, the actual allowed
+    # interval for float input is [-(1 + 1/c)*scale, scale],
+    # where c = 2**(8*sampwidth - 1) - 0.5.  Values outside
+    # that interval will result in clipping.
 
-    dt = _sampwidth_dtypes[sampwidth]
-    if vmax == vmin:
-        data = _np.zeros(data.shape, dtype=dt)
+    nbits = 8*sampwidth
+    c = 2**(nbits - 1) - 0.5
+
+    if scale is None:
+        scale = max(_np.max(_np.r_[x[x > 0], 0]),
+                    _np.max(_np.r_[-x[x < 0], 0])/(1 + 1/c))
+
+    if sampwidth == 1:
+        int_min = 0
+        midpoint = 128
+        int_max = 255
     else:
-        outmin, outmax = _sampwidth_ranges[sampwidth]
-        if outmin != vmin or outmax != vmax:
-            vmin = float(vmin)
-            vmax = float(vmax)
-            data = (float(outmax - outmin) * (data - vmin) /
-                    (vmax - vmin)).astype(_np.int64) + outmin
-            data[data == outmax] = outmax - 1
-        data = data.astype(dt)
+        int_min = -2**(nbits - 1)
+        midpoint = 0
+        int_max = 2**(nbits - 1) - 1
 
-    return data
+    scaled_x = x / scale
+    if _np.any(scaled_x > 1) or _np.any(scaled_x < -1 - 1/c):
+        msg = (f'Some data values have been clipped.  With {scale=}, the '
+               'interval of input values that will not be clipped '
+               f'is [{-(1 + 1/c)*scale}, {scale}]')
+        if clip == "warn":
+            _warnings.warn(ClippedDataWarning(msg))
+        elif clip == "raise":
+            raise ClippedDataError(msg)
+
+    y = midpoint + _round_with_half_towards_zero(x/scale*c)
+    y = _np.clip(y, int_min, int_max).astype(_sampwidth_dtypes[sampwidth])
+    return y
 
 
-def write(file, data, rate, scale=None, sampwidth=None):
+def _round_with_half_towards_zero(x):
+    s = _np.sign(x)
+    return s * _np.ceil(_np.abs(x) - 0.5)
+
+
+def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
     """
     Write the numpy array `data` to a WAV file.
 
-    The Python standard library "wave" is used to write the data
-    to the file, so this function has the same limitations as that
-    module.  In particular, the Python library does not support
-    floating point data.  When given a floating point array, this
-    function converts the values to integers.  See below for the
-    conversion rules.
+    The Python standard library "wave" is used to write the data to the
+    file, so this function has the same limitations as that module.  In
+    particular, the Python library does not support floating point data,
+    so this function must convert floating point input to integers before
+    writing the data to the file.  See below for the conversion rules.
+
+    *Important notes*
+
+    * If `data` has an *integer* data type, signed or unsigned and any bit
+      depth, the values are never scaled or shifted.  The only possible
+      changes to the values that can occur is if the data must be clipped
+      to fit the desired output sample width.  It is an error to give a
+      value for the `scale` parameter if `data` has an integer data type.
+    * If `data` is a floating point type, `sampwidth` must be given.  The
+      default behavior is to scale the data to use the full range of the
+      output sample width (while ensuring that 0 in the input is mapped
+      to the midpoint of the integer output range).  To change this
+      behavior, set `scale` to the maximum of the input data range.  For
+      example, if the values in `data` range from -1.5 to 1.5, then by
+      setting `scale=3`, the data in the output will use half the available
+      range of the output type.
 
     Parameters
     ----------
@@ -263,46 +316,26 @@ def write(file, data, rate, scale=None, sampwidth=None):
 
         For any other data types, or to write a 24 bit file, `sampwidth`
         must be given.
-    scale : tuple or str, optional
+    scale : float, optional
+        This controls the output range when the input is floating point.
+        `scale` must not be given when the input data has integer data
+        type.
+
         By default, the data written to the file is scaled up or down to
-        occupy the full range of the output data type.  So, for example,
-        the unsigned 8 bit data [0, 1, 2, 15] would be written to the file
-        as [0, 17, 30, 255].  More generally, the default behavior is
-        (roughly)::
+        occupy the full range of the output data type.  For example, with
+        `sampwidth=2` the input [-0.5, -1.0, 0.0, 0.25, 1.0] would result in
+        the 16 signed integers [-16384, -32767, 0, 8192, 32767] being
+        written to the WAV file. By setting `scale=2`, the output values
+        would be [-8192, -16384, 0, 4096, 16384].
 
-            vmin = data.min()
-            vmax = data.max()
-            outmin = <minimum integer of the output dtype>
-            outmax = <maximum integer of the output dtype>
-            outdata = (outmax - outmin)*(data - vmin)/(vmax - vmin) + outmin
-
-        The `scale` argument allows the scaling of the output data to be
-        changed.  `scale` can be a tuple of the form `(vmin, vmax)`, in which
-        case the given values override the use of `data.min()` and
-        `data.max()` for `vmin` and `vmax` shown above.  (If either value
-        is `None`, the value shown above is used.)  Data outside the
-        range (vmin, vmax) is clipped.  If `vmin == vmax`, the output is
-        all zeros.
-
-        If `scale` is the string "none", then `vmin` and `vmax` are set to
-        `outmin` and `outmax`, respectively. This means the data is written
-        to the file with no scaling.  (Note: `scale="none" is not the same
-        as `scale=None`.  The latter means "use the default behavior",
-        which is to scale by the data minimum and maximum.)
-
-        If `scale` is the string "dtype-limits", then `vmin` and `vmax`
-        are set to the minimum and maximum integers of `data.dtype`.
-        The string "dtype-limits" is not allowed when the `data` is a
-        floating point array.
-
-        If using `scale` results in values that exceed the limits of the
-        output sample width, the data is clipped.  For example, the
-        following code::
-
-            >>> x = np.array([-100, 0, 100, 200, 300, 325])
-            >>> wavio.write('foo.wav', x, 8000, scale='none', sampwidth=1)
-
-        will write the values [0, 0, 100, 200, 255, 255] to the file.
+        In other words, `scale` is maximum positive value that is mapped
+        to the maximum integer output value.
+    clip : str, optional
+        If "warn" (the default), the function will generate a warning if
+        any of the data values must be clipped when written to the format
+        of the output array.  If "raise", the function will raise an
+        exception if clipping occurs.  If "ignore", no warning or
+        exception is generated is clipping occurs.
 
     Example
     -------
@@ -318,13 +351,12 @@ def write(file, data, rate, scale=None, sampwidth=None):
     >>> wavio.write("sine24.wav", x, rate, sampwidth=3)
 
     Create a file that contains the 16 bit integer values -10000 and 10000
-    repeated 100 times.  Don't automatically scale the values.  Use a sample
-    rate 8000.
+    repeated 100 times.  Use a sample rate of 8000.
 
     >>> x = np.empty(200, dtype=np.int16)
     >>> x[::2] = -10000
     >>> x[1::2] = 10000
-    >>> wavio.write("foo.wav", x, 8000, scale='none')
+    >>> wavio.write("foo.wav", x, 8000)
 
     Check that the file contains what we expect.
 
@@ -332,16 +364,11 @@ def write(file, data, rate, scale=None, sampwidth=None):
     >>> np.all(w.data[:, 0] == x)
     True
 
-    In the following, the values -10000 and 10000 (from within the 16 bit
-    range [-2**15, 2**15-1]) are mapped to the corresponding values 88 and
-    168 (in the range [0, 2**8-1]).
-
-    >>> wavio.write("foo.wav", x, 8000, sampwidth=1, scale='dtype-limits')
-    >>> w = wavio.read("foo.wav")
-    >>> w.data[:4, 0]
-    array([ 88, 168,  88, 168], dtype=uint8)
-
     """
+    if clip not in ["ignore", "warn", "raise"]:
+        raise ValueError('clip must be one of "ignore", "warn" or "raise".')
+
+    data = _np.asarray(data)
 
     if sampwidth is None:
         if not _np.issubdtype(data.dtype, _np.integer) or data.itemsize > 4:
@@ -353,41 +380,23 @@ def write(file, data, rate, scale=None, sampwidth=None):
             raise ValueError('sampwidth must be 1, 2, 3 or 4.')
 
     outdtype = _sampwidth_dtypes[sampwidth]
-    outmin, outmax = _sampwidth_ranges[sampwidth]
+    outmin, outmax = _sampwidth_minmax[sampwidth]
 
-    if scale == "none":
-        data = data.clip(outmin, outmax-1).astype(outdtype)
-    elif scale == "dtype-limits":
-        if not _np.issubdtype(data.dtype, _np.integer):
-            raise ValueError("scale cannot be 'dtype-limits' with "
-                             "non-integer data.")
-        # Easy transforms that just changed the signedness of the data.
-        if sampwidth == 1 and data.dtype == _np.int8:
-            data = (data.astype(_np.int16) + 128).astype(_np.uint8)
-        elif sampwidth == 2 and data.dtype == _np.uint16:
-            data = (data.astype(_np.int32) - 32768).astype(_np.int16)
-        elif sampwidth == 4 and data.dtype == _np.uint32:
-            data = (data.astype(_np.int64) - 2**31).astype(_np.int32)
-        elif data.itemsize != sampwidth:
-            # Integer input, but rescaling is needed to adjust the
-            # input range to the output sample width.
-            ii = _np.iinfo(data.dtype)
-            vmin = ii.min
-            vmax = ii.max
-            data = _scale_to_sampwidth(data, sampwidth, vmin, vmax)
+    if _np.issubdtype(data.dtype, _np.integer):
+        if scale is not None:
+            raise ValueError('The scale parameter must not be set when the '
+                             'input is an integer array.  No shifting or '
+                             'scaling is done to integer input values.')
+        if (data.min() < outmin or data.max() > outmax):
+            if clip == "warn":
+                _warnings.warn(ClippedDataWarning())
+            elif clip == "raise":
+                raise ClippedDataError()
+        data = data.clip(outmin, outmax).astype(outdtype)
+    elif _np.issubdtype(data.dtype, _np.floating):
+        data = _float_to_integer(data, sampwidth, scale=scale, clip=clip)
     else:
-        if scale is None:
-            vmin = data.min()
-            vmax = data.max()
-        else:
-            # scale must be a tuple of the form (vmin, vmax)
-            vmin, vmax = scale
-            if vmin is None:
-                vmin = data.min()
-            if vmax is None:
-                vmax = data.max()
-
-        data = _scale_to_sampwidth(data, sampwidth, vmin, vmax)
+        raise TypeError(f'unsupported input array data type: {data.dtype}')
 
     # At this point, `data` has been converted to have one of the following:
     #    sampwidth   dtype

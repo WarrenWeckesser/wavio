@@ -1,5 +1,5 @@
 
-import unittest
+import pytest
 import contextlib
 import tempfile
 import os
@@ -13,7 +13,8 @@ import wavio
 def temporary_filepath(filename):
     # When support for Python 2.7 is dropped, this code can be simplified
     # by using tempfile.TemporaryDirectory().
-    tmpdir = tempfile.mkdtemp()
+    # tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.TemporaryDirectory()
     fullname = os.path.join(tmpdir, filename)
     try:
         yield fullname
@@ -29,198 +30,235 @@ data1 = np.array([1, -2,
                  dtype=np.int32)
 
 
-class TestWavio(unittest.TestCase):
+def check_basic(filename, nchannels, sampwidth, framerate):
+    with wave.open(filename, 'r') as f:
+        assert f.getnchannels() == nchannels, "unexpected nchannels"
+        assert f.getsampwidth() == sampwidth, "unexpected sampwidth"
+        assert f.getframerate() == framerate, "unexpected framerate"
 
-    def check_basic(self, filename, nchannels, sampwidth, framerate):
-        f = wave.open(filename, 'r')
-        try:
-            self.assertEqual(f.getnchannels(), nchannels)
-            self.assertEqual(f.getsampwidth(), sampwidth)
-            self.assertEqual(f.getframerate(), framerate)
-        finally:
-            f.close()
 
-    def check_wavio_read(self, filename, rate, sampwidth, dtype, shape, data):
-        w = wavio.read(filename)
-        self.assertEqual(w.rate, rate)
-        self.assertEqual(w.sampwidth, sampwidth)
-        self.assertEqual(w.data.dtype, dtype)
-        self.assertEqual(w.data.shape, shape)
-        np.testing.assert_equal(w.data, data)
+def check_wavio_read(filename, rate, sampwidth, dtype, shape, data):
+    if data.ndim == 1:
+        # wavio.read always returns a 2-d array.
+        data = data[:, None]
+    w = wavio.read(filename)
+    assert w.rate == rate, "unexpected rate"
+    assert w.sampwidth == sampwidth, "unexpected sampwidth"
+    assert w.data.dtype == dtype, "unexpected dtype"
+    assert w.data.shape == shape, "unexpected shape"
+    np.testing.assert_equal(w.data, data, "data does not match")
 
-    def test1(self):
-        with temporary_filepath("test1data.wav") as filename:
+
+class TestWavio():
+
+    def test0(self):
+        filename = 'test1data.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             wavio.write(filename, data1, 44100, sampwidth=3)
 
-            self.check_basic(filename, nchannels=1, sampwidth=3,
-                             framerate=44100)
-            self.check_wavio_read(filename, rate=44100, sampwidth=3,
-                                  dtype=np.int32, shape=(len(data1), 1),
-                                  data=data1[:, None])
+            check_basic(filename, nchannels=1, sampwidth=3,
+                        framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=3,
+                             dtype=np.int32, shape=(len(data1), 1),
+                             data=data1)
+
+    @pytest.mark.parametrize('data', [data1[:, None],
+                                      data1.reshape(-1, 2)])
+    def test1(self, data):
+        filename = 'test1data.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
+            wavio.write(filename, data, 44100, sampwidth=3)
+
+            check_basic(filename, nchannels=data.shape[1], sampwidth=3,
+                        framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=3,
+                             dtype=np.int32, shape=data.shape,
+                             data=data)
 
     def test2(self):
-        with temporary_filepath("test2data.wav") as filename:
+        filename = 'test2data.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data2 = data1.reshape(-1, 2)
             wavio.write(filename, data2, 44100, sampwidth=3)
 
-            self.check_basic(filename, nchannels=2, sampwidth=3,
-                             framerate=44100)
-            self.check_wavio_read(filename, rate=44100, sampwidth=3,
-                                  dtype=np.int32, shape=data2.shape,
-                                  data=data2)
+            check_basic(filename, nchannels=2, sampwidth=3, framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=3,
+                             dtype=np.int32, shape=data2.shape,
+                             data=data2)
 
     def test3(self):
-        with temporary_filepath("test3data.wav") as filename:
+        filename = 'test3data.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data = np.zeros(32, dtype=np.int16)
             data[1::4] = 10000
             data[3::4] = -10000
             wavio.write(filename, data, 44100)
 
-            self.check_basic(filename, nchannels=1, sampwidth=2,
-                             framerate=44100)
-            expected = np.zeros_like(data).reshape(-1, 1)
-            expected[1::4, 0] = 32767
-            expected[3::4, 0] = -32768
-            self.check_wavio_read(filename, rate=44100, sampwidth=2,
-                                  dtype=np.int16, shape=(32, 1),
-                                  data=expected)
-
-    def test4(self):
-        with temporary_filepath("test4data.wav") as filename:
-            data = np.zeros(32, dtype=np.int16)
-            data[1::4] = 10000
-            data[3::4] = -10000
-            wavio.write(filename, data, 44100, sampwidth=1)
-
-            self.check_basic(filename, nchannels=1, sampwidth=1,
-                             framerate=44100)
-            expected = 128*np.ones_like(data, dtype=np.uint8).reshape(-1, 1)
-            expected[1::4, 0] = 255
-            expected[3::4, 0] = 0
-            self.check_wavio_read(filename, rate=44100, sampwidth=1,
-                                  dtype=np.uint8, shape=(32, 1),
-                                  data=expected)
+            check_basic(filename, nchannels=1, sampwidth=2, framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=2,
+                             dtype=np.int16, shape=(32, 1),
+                             data=data)
 
     def test5(self):
-        with temporary_filepath("test5data.wav") as filename:
+        filename = 'test5data.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data = np.zeros(32, dtype=np.int16)
             data[1::4] = 10000
             data[3::4] = -10000
-            wavio.write(filename, data, 44100, sampwidth=2, scale='none')
+            wavio.write(filename, data, 44100, sampwidth=2)
 
-            self.check_basic(filename, nchannels=1, sampwidth=2,
-                             framerate=44100)
-            self.check_wavio_read(filename, rate=44100, sampwidth=2,
-                                  dtype=np.int16, shape=(32, 1),
-                                  data=data.reshape(-1, 1))
+            check_basic(filename, nchannels=1, sampwidth=2, framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=2,
+                             dtype=np.int16, shape=(32, 1),
+                             data=data.reshape(-1, 1))
 
     def test6(self):
-        with temporary_filepath("test6data.wav") as filename:
+        filename = 'test6data.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data = np.zeros(32, dtype=np.int16)
             data[1::4] = 10000
             data[3::4] = -10000
-            wavio.write(filename, data, 44100, sampwidth=1, scale='none')
+            wavio.write(filename, data, 44100, sampwidth=1, clip='ignore')
 
-            self.check_basic(filename, nchannels=1, sampwidth=1,
-                             framerate=44100)
-            expected = np.zeros_like(data, dtype=np.uint8).reshape(-1, 1)
+            check_basic(filename, nchannels=1, sampwidth=1, framerate=44100)
+            expected = np.zeros(data.shape, dtype=np.uint8).reshape(-1, 1)
             expected[1::4, 0] = 255
-            self.check_wavio_read(filename, rate=44100, sampwidth=1,
-                                  dtype=np.uint8, shape=(32, 1),
-                                  data=expected)
+            check_wavio_read(filename, rate=44100, sampwidth=1,
+                             dtype=np.uint8, shape=(32, 1),
+                             data=expected)
 
     def test_clip(self):
-        with temporary_filepath("testdata.wav") as filename:
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data = np.array([-100, 0, 100, 200, 300, 325])
-            wavio.write(filename, data, 44100, sampwidth=1, scale='none')
+            wavio.write(filename, data, 44100, sampwidth=1, clip='ignore')
 
-            self.check_basic(filename, nchannels=1, sampwidth=1,
-                             framerate=44100)
+            check_basic(filename, nchannels=1, sampwidth=1, framerate=44100)
             expected = np.array([0, 0, 100, 200, 255, 255],
-                                dtype=np.uint8).reshape(-1, 1)
-            self.check_wavio_read(filename, rate=44100, sampwidth=1,
-                                  dtype=np.uint8, shape=(len(data), 1),
-                                  data=expected)
-
-    def test_vmin_equal_vmax(self):
-        with temporary_filepath("testdata.wav") as filename:
-            data = np.array([-100, 0, 100, 200, 300, 325])
-            wavio.write(filename, data, 44100, sampwidth=1, scale=(200, 200))
-
-            self.check_basic(filename, nchannels=1, sampwidth=1,
-                             framerate=44100)
-            expected = np.array([0, 0, 0, 0, 0, 0],
-                                dtype=np.uint8).reshape(-1, 1)
-            self.check_wavio_read(filename, rate=44100, sampwidth=1,
-                                  dtype=np.uint8, shape=(len(data), 1),
-                                  data=expected)
+                                dtype=np.uint8)
+            check_wavio_read(filename, rate=44100, sampwidth=1,
+                             dtype=np.uint8, shape=(len(data), 1),
+                             data=expected)
 
     def test_signed8bit_full_range_round_trip(self):
-        # Regression test for github issue 5.
-        with temporary_filepath("testdata.wav") as filename:
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
+            # Negative values will be clipped.
             data = np.array([-2**7, -2**3, -1, 0, 1, 2**3, 2**7-1],
                             dtype=np.int8)
-            wavio.write(filename, data, 44100)
+            wavio.write(filename, data, 44100, clip='ignore')
 
-            self.check_basic(filename, nchannels=1, sampwidth=1,
-                             framerate=44100)
-            expected_data = (data.astype(np.int16) + 2**7).astype(np.uint8)
-            self.check_wavio_read(filename, rate=44100, sampwidth=1,
-                                  dtype=np.uint8, shape=(len(data), 1),
-                                  data=expected_data.reshape(-1, 1))
+            check_basic(filename, nchannels=1, sampwidth=1, framerate=44100)
+            expected_data = data.clip(0, 255).astype(np.uint8)
+            check_wavio_read(filename, rate=44100, sampwidth=1,
+                             dtype=np.uint8, shape=(len(data), 1),
+                             data=expected_data)
 
     def test_unsigned8bit_full_range_round_trip(self):
         # Regression test for github issue 5.
-        with temporary_filepath("testdata.wav") as filename:
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data = np.array([[0, 1], [2**4-1, 2**4], [2**8-2, 2**8-1]],
                             dtype=np.uint8)
             wavio.write(filename, data, 44100)
 
-            self.check_basic(filename, nchannels=2, sampwidth=1,
-                             framerate=44100)
-            self.check_wavio_read(filename, rate=44100, sampwidth=1,
-                                  dtype=np.uint8, shape=data.shape,
-                                  data=data)
+            check_basic(filename, nchannels=2, sampwidth=1,
+                        framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=1,
+                             dtype=np.uint8, shape=data.shape,
+                             data=data)
 
     def test_16bit_full_range_round_trip(self):
         # Regression test for github issue 5.
-        with temporary_filepath("testdata.wav") as filename:
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data = np.array([-2**15, -2**8, -1, 0, 1, 2**8, 2**15-1],
                             dtype=np.int16)
             wavio.write(filename, data, 44100)
 
-            self.check_basic(filename, nchannels=1, sampwidth=2,
-                             framerate=44100)
-            self.check_wavio_read(filename, rate=44100, sampwidth=2,
-                                  dtype=np.int16, shape=(len(data), 1),
-                                  data=data.reshape(-1, 1))
+            check_basic(filename, nchannels=1, sampwidth=2, framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=2,
+                             dtype=np.int16, shape=(len(data), 1),
+                             data=data.reshape(-1, 1))
 
     def test_24bit_full_range_round_trip(self):
         # Regression test for github issue 5.
-        with temporary_filepath("testdata.wav") as filename:
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data = np.array([-2**23, -2**16, -1, 0, 1, 2**16, 2**23-1],
                             dtype=np.int32)
             wavio.write(filename, data, 44100, sampwidth=3)
 
-            self.check_basic(filename, nchannels=1, sampwidth=3,
-                             framerate=44100)
-            self.check_wavio_read(filename, rate=44100, sampwidth=3,
-                                  dtype=np.int32, shape=(len(data), 1),
-                                  data=data.reshape(-1, 1))
+            check_basic(filename, nchannels=1, sampwidth=3, framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=3,
+                             dtype=np.int32, shape=(len(data), 1),
+                             data=data.reshape(-1, 1))
 
     def test_32bit_full_range_round_trip(self):
         # Regression test for github issue 5.
-        with temporary_filepath("testdata.wav") as filename:
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
             data = np.array([-2**31, -2**16, -1, 0, 1, 2**16, 2**31-1],
                             dtype=np.int32)
             wavio.write(filename, data, 44100)
 
-            self.check_basic(filename, nchannels=1, sampwidth=4,
-                             framerate=44100)
-            self.check_wavio_read(filename, rate=44100, sampwidth=4,
-                                  dtype=np.int32, shape=(len(data), 1),
-                                  data=data.reshape(-1, 1))
+            check_basic(filename, nchannels=1, sampwidth=4, framerate=44100)
+            check_wavio_read(filename, rate=44100, sampwidth=4,
+                             dtype=np.int32, shape=(len(data), 1),
+                             data=data.reshape(-1, 1))
 
+    def test_clipping_exception_float(self):
+        data = np.array([0.5, 0.25, 0, -0.9, -1.5, 0])
+        with pytest.raises(wavio.ClippedDataError):
+            # The error will be detected before the function attempts to
+            # create the output file, so we can pass in the filename knowing
+            # that it won't actually try to create that file.
+            wavio.write("foo.wav", data, rate=8000, sampwidth=2, scale=1.0,
+                        clip='raise')
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_clipping_exception_int(self):
+        data = np.array([0, 100, 200, 300, 400])
+        with pytest.raises(wavio.ClippedDataError):
+            # The error will be detected before the function attempts to
+            # create the output file, so we can pass in the filename knowing
+            # that it won't actually try to create that file.
+            wavio.write("foo.wav", data, rate=100, sampwidth=1, clip='raise')
+
+    @pytest.mark.parametrize('sampwidth, low, mid, high',
+                             [(1, 1, 128, 255),
+                              (2, -2**15+1, 0, 2**15-1),
+                              (3, -2**23+1, 0, 2**23-1),
+                              (4, -2**31+1, 0, 2**31-1)])
+    def test_scale_limits(self, sampwidth, low, mid, high):
+        data = np.array([-1.0, 0.0, 1.0])
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
+            wavio.write(filename, data, rate=22050, scale=1.0,
+                        sampwidth=sampwidth, clip='raise')
+            w = wavio.read(filename)
+            np.testing.assert_equal(w.data, np.array([[low], [mid], [high]]))
+
+    def test_float_extra_negative(self):
+        # `scale=1.0` is used; the two values here that are less than 1
+        # will be mapped to 0, while -1 is mapped to 1.
+        data = np.array([-1.0075, -1.005, -1.0, 0, 1.0])
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
+            wavio.write(filename, data, rate=22050,
+                        sampwidth=1, clip='raise')
+            w = wavio.read(filename)
+            np.testing.assert_equal(w.data, np.array([[0, 0, 1, 128, 255]]).T)

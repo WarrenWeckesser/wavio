@@ -3,26 +3,48 @@ wavio
 
 ``wavio`` is a Python module that defines two functions:
 
-* ``wavio.read`` reads a WAV file and returns an object that holds the sampling
-  rate, sample width (in bytes), and a numpy array containing the data.
+* ``wavio.read`` reads a WAV file and returns an object that holds the
+  sampling rate, sample width (in bytes), and a numpy array containing the
+  data.
 * ``wavio.write`` writes a numpy array to a WAV file, optionally using a
   specified sample width.
 
-The module uses the ``wave`` module in Python's standard library, so it has the
-same limitations as that module.  In particular, it does not support compressed
-WAV files, and it does not handle floating point WAV files.  (When floating
-point data is passed to ``wavio.write`` it is converted to integers before
-being written to the WAV file.)  The functions can read and write 8-, 16-, 24-
-and 32-bit integer WAV files.
+The functions can read and write 8-, 16-, 24- and 32-bit integer WAV files.
 
-``wavio`` has been tested with Python versions 2.7 and 3.4 to 3.9.
+The module uses the ``wave`` module in Python's standard library, so it has
+the same limitations as that module.  In particular, the ``wave`` module
+does not support compressed WAV files, and it does not handle floating
+point WAV files.  When floating point data is passed to ``wavio.write`` it
+is converted to integers before being written to the WAV file.
 
-``wavio`` depends on numpy (http://www.numpy.org).  NumPy version 1.9.0 or later
-is required.
+``wavio`` requires Python 3.6 or later.
 
-The package has a suite of unit tests, but it should still be considered
-prototype-quality software.  There may be backwards-incompatible API changes
-between releases.
+``wavio`` depends on numpy (http://www.numpy.org).  NumPy version 1.19.0 or
+later is required.    The unit tests in ``wavio`` require ``pytest``.
+
+The API of the functions in ``wavio`` should not be considered stable.  There
+may be backwards-incompatible API changes between releases.
+
+*Important notice*
+
+In version 0.0.5 (not released yet), the data handling has been changed in a
+backwards-incompatible way.  The API in 0.0.4 was a flexible interface that
+only its creator could love.  The new API is simpler, and it is hoped that it
+does the right thing by default in most cases.  In particular:
+
+* When the input data is an integer type, the values are not scaled or
+  shifted.  The only changed that might happen is the data might be clipped
+  if the values do not fit in the output integer type.
+* By default, floating point input is scaled to the full width of the
+  output integer type, with the constraint that 0 in the input is mapped
+  to the midpoint of the output integer type.  The ```scale``` parameter allows
+  that behavior to be changed--it gives the upper bound of the float values
+  that are mapped to the maximum of the output integer type.  Regardless of
+  the value of ``scale``, the float input 0.0 is always mapped to the midpoint
+  of the output type.
+* A warning is now generated if any data values are clipped.  A parameter
+  allows the generation of the warning to be disabled or converted to an
+  exception.
 
 Example
 ~~~~~~~
