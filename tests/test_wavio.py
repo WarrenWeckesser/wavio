@@ -1,25 +1,10 @@
 
 import pytest
-import contextlib
 import tempfile
 import os
-import shutil
 import wave
 import numpy as np
 import wavio
-
-
-@contextlib.contextmanager
-def temporary_filepath(filename):
-    # When support for Python 2.7 is dropped, this code can be simplified
-    # by using tempfile.TemporaryDirectory().
-    # tmpdir = tempfile.mkdtemp()
-    tmpdir = tempfile.TemporaryDirectory()
-    fullname = os.path.join(tmpdir, filename)
-    try:
-        yield fullname
-    finally:
-        shutil.rmtree(tmpdir)
 
 
 data1 = np.array([1, -2,
