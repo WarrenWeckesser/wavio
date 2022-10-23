@@ -43,7 +43,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.5.dev5"
+__version__ = "0.0.5.dev6"
 
 
 class ClippedDataWarning(UserWarning):
@@ -343,11 +343,15 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
 
     >>> import numpy as np
     >>> import wavio
-    >>> rate = 22050  # samples per second
-    >>> T = 3         # sample duration (seconds)
-    >>> f = 440.0     # sound frequency (Hz)
-    >>> t = np.linspace(0, T, T*rate, endpoint=False)
+
+    >>> rate = 22050           # samples per second
+    >>> T = 3                  # sample duration (seconds)
+    >>> n = int(rate*T)        # number of samples
+    >>> t = np.arange(n)/rate  # grid of time values
+
+    >>> f = 440.0              # sound frequency (Hz)
     >>> x = np.sin(2*np.pi * f * t)
+
     >>> wavio.write("sine24.wav", x, rate, sampwidth=3)
 
     Create a file that contains the 16 bit integer values -10000 and 10000
