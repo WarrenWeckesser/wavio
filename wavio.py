@@ -43,7 +43,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.5.dev6"
+__version__ = "0.0.5.dev7"
 
 
 class ClippedDataWarning(UserWarning):
@@ -235,9 +235,11 @@ def _float_to_integer(x, sampwidth, scale=None, clip="warn"):
     nbits = 8*sampwidth
     c = 2**(nbits - 1) - 0.5
 
-    if scale is None:
+    if scale == "auto":
         scale = max(_np.max(_np.r_[x[x > 0], 0]),
                     _np.max(_np.r_[-x[x < 0], 0])/(1 + 1/c))
+    elif scale is None:
+        scale = 1.0
 
     if sampwidth == 1:
         int_min = 0
@@ -286,13 +288,10 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
       to fit the desired output sample width.  It is an error to give a
       value for the `scale` parameter if `data` has an integer data type.
     * If `data` is a floating point type, `sampwidth` must be given.  The
-      default behavior is to scale the data to use the full range of the
-      output sample width (while ensuring that 0 in the input is mapped
-      to the midpoint of the integer output range).  To change this
-      behavior, set `scale` to the maximum of the input data range.  For
-      example, if the values in `data` range from -1.5 to 1.5, then by
-      setting `scale=3`, the data in the output will use half the available
-      range of the output type.
+      default behavior is to scale input values in the range [-1, 1] to
+      the output range [min_int+1, max_int], where min_int and max_int are
+      the minimum and maximum values of the output data type determined by
+      `sampwidth`.  See the description of `scale` below for more options.
 
     Parameters
     ----------
@@ -321,15 +320,23 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
         `scale` must not be given when the input data has integer data
         type.
 
-        By default, the data written to the file is scaled up or down to
-        occupy the full range of the output data type.  For example, with
-        `sampwidth=2` the input [-0.5, -1.0, 0.0, 0.25, 1.0] would result in
+        if `scale` a is numeric value, then input values in the range
+        `[-scale, scale]` are mapped to the integer output range centered
+        at the midpoint of the output range.  For 8 bit unsigned integer
+        output (i.e. `sampwdith=1`), the midpoint is 128. For `sampwidth`
+        2, 3 or 4 (corresponding to signed integer output), the midpoint
+        is 0.
+
+        If `scale` is the string `"auto"`, the data written to the file is
+        scaled up or down to occupy the full range of the output data type.
+        For example, with `sampwidth=2` the input
+        `data=[-0.5, -1.0, 0.0, 0.25, 1.0]` would result in
         the 16 signed integers [-16384, -32767, 0, 8192, 32767] being
         written to the WAV file. By setting `scale=2`, the output values
         would be [-8192, -16384, 0, 4096, 16384].
 
-        In other words, `scale` is maximum positive value that is mapped
-        to the maximum integer output value.
+        When the input is floating point and `scale` is not given, the
+        default value `scale=1.0` is used.
     clip : str, optional
         If "warn" (the default), the function will generate a warning if
         any of the data values must be clipped when written to the format
@@ -351,6 +358,9 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
 
     >>> f = 440.0              # sound frequency (Hz)
     >>> x = np.sin(2*np.pi * f * t)
+
+    `x` is a single sine wave with amplitude 1, so we can use the default
+    `scale`.
 
     >>> wavio.write("sine24.wav", x, rate, sampwidth=3)
 
@@ -397,6 +407,16 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
     >>> w = wavio.read("harmonic.wav")
     >>> w.data.min(), w.data.max()
     (-19243, 17921)
+
+    If we want the WAV file to use as much of the range of the output
+    integer type as possible (while still mapping 0.0 in the input to 0 in
+    the output), we set `scale="auto"`.
+
+    >>> wavio.write('harmonic_full.wav', y, rate, sampwidth=2, scale="auto")
+
+    >>> w = wavio.read('harmonic_full.wav')
+    >>> w.data.min(), w.data.max()
+    (-32768, 30517)
 
     """
     if clip not in ["ignore", "warn", "raise"]:

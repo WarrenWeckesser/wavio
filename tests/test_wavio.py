@@ -236,14 +236,33 @@ class TestWavio():
             w = wavio.read(filename)
             np.testing.assert_equal(w.data, np.array([[low], [mid], [high]]))
 
-    def test_float_extra_negative(self):
+    @pytest.mark.parametrize('scale', [None, 1, "auto"])
+    def test_float_extra_negative(self, scale):
         # `scale=1.0` is used; the two values here that are less than 1
         # will be mapped to 0, while -1 is mapped to 1.
         data = np.array([-1.0075, -1.005, -1.0, 0, 1.0])
         filename = 'testdata.wav'
         with tempfile.TemporaryDirectory() as d:
             os.chdir(d)
-            wavio.write(filename, data, rate=22050,
+            wavio.write(filename, data, rate=22050, scale=scale,
                         sampwidth=1, clip='raise')
             w = wavio.read(filename)
             np.testing.assert_equal(w.data, np.array([[0, 0, 1, 128, 255]]).T)
+
+    def test_float_scale_auto(self):
+        d = 1/(2**23 - 0.5)
+        data = 4*np.array([-1.0 - 0.96*d, -1.0 - 0.01*d,
+                           -1.0, -1.0 + 0.75*d, -1.0 + 1.25*d,
+                           -2*d, -d, -0.25*d, 0, 0.25*d, d, 2*d,
+                           1.0 - 1.25*d, 1.0 - 0.75*d, 1.0])
+        filename = 'testdata.wav'
+        with tempfile.TemporaryDirectory() as d:
+            os.chdir(d)
+            wavio.write(filename, data, rate=10, scale="auto", sampwidth=3)
+            w = wavio.read(filename)
+            expected = np.array([-2**23, -2**23,
+                                 -2**23 + 1, -2**23 + 1, -2**23 + 2,
+                                 -2, -1, 0, 0, 0, 1, 2,
+                                 2**23 - 2, 2**23 - 1, 2**23 - 1])
+            actual = w.data[:, 0]
+            np.testing.assert_array_equal(actual, expected)
