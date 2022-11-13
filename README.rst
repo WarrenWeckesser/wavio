@@ -27,10 +27,10 @@ may be backwards-incompatible API changes between releases.
 
 *Important notice*
 
-In version 0.0.5 (not released yet), the data handling in ``wavio.write`` has
-been changed in a backwards-incompatible way.  The API for scaling the input
-in 0.0.4 was a flexible interface that only its creator could love.  The new
-API is simpler, and it is hoped that it does the right thing by default in
+In version 0.0.5, the data handling in ``wavio.write`` has been changed in
+a backwards-incompatible way.  The API for scaling the input in 0.0.4 was
+a flexible interface that only its creator could love.  The new API is
+simpler, and it is hoped that it does the right thing by default in
 most cases.  In particular:
 
 * When the input data is an integer type, the values are not scaled or
