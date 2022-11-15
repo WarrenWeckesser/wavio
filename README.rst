@@ -36,15 +36,14 @@ most cases.  In particular:
 * When the input data is an integer type, the values are not scaled or
   shifted.  The only change that might happen is the data will be clipped
   if the values do not fit in the output integer type.
-* By default, floating point input is scaled to the full width of the output
-  integer type, with the constraint that 0.0 in the input is mapped to the
-  midpoint of the output integer type.  The ``scale`` parameter allows that
-  behavior to be changed--it gives the upper bound of the float values that
-  are mapped to the maximum of the output integer type.  That is, it defines
-  what the user considers the "full scale" amplitude of the input to be.
-  Regardless of the value of ``scale``, the float input 0.0 is always mapped
-  to the midpoint of the output type; ``wavio.write`` will not translate the
-  values up or down.
+* If the input data is a floating point type, ``sampwidth`` must be given.
+  The default behavior is to scale input values in the range [-1.0, 1.0]
+  to the output range [min_int+1, max_int], where min_int and max_int are
+  the minimum and maximum values of the output data type determined by
+  ``sampwidth``.  See the description of ``scale`` in the docstring of
+  ``wavio.write`` for more options.  Regardless of the value of ``scale``,
+  the float input 0.0 is always mapped to the midpoint of the output type;
+  ``wavio.write`` will not translate the values up or down.
 * A warning is now generated if any data values are clipped.  A parameter
   allows the generation of the warning to be disabled or converted to an
   exception.
