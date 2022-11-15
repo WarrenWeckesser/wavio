@@ -43,7 +43,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.7.dev0"
+__version__ = "0.0.7.dev1"
 
 
 class ClippedDataWarning(UserWarning):
@@ -252,7 +252,7 @@ def _float_to_integer(x, sampwidth, scale=None, clip="warn"):
 
     scaled_x = x / scale
     if _np.any(scaled_x > 1) or _np.any(scaled_x < -1 - 1/c):
-        msg = (f'Some data values have been clipped.  With {scale=}, the '
+        msg = (f'Some data values have been clipped.  With scale={scale}, the '
                'interval of input values that will not be clipped '
                f'is [{-(1 + 1/c)*scale}, {scale}]')
         if clip == "warn":
