@@ -34,7 +34,7 @@ simpler, and it is hoped that it does the right thing by default in
 most cases.  In particular:
 
 * When the input data is an integer type, the values are not scaled or
-  shifted.  The only changed that might happen is the data might be clipped
+  shifted.  The only change that might happen is the data will be clipped
   if the values do not fit in the output integer type.
 * By default, floating point input is scaled to the full width of the output
   integer type, with the constraint that 0.0 in the input is mapped to the
