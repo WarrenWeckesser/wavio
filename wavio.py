@@ -320,7 +320,7 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
         `scale` must not be given when the input data has integer data
         type.
 
-        if `scale` a is numeric value, then input values in the range
+        if `scale` is a numeric value, then input values in the range
         `[-scale, scale]` are mapped to the integer output range centered
         at the midpoint of the output range.  For 8 bit unsigned integer
         output (i.e. `sampwdith=1`), the midpoint is 128. For `sampwidth`
@@ -342,7 +342,7 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
         any of the data values must be clipped when written to the format
         of the output array.  If "raise", the function will raise an
         exception if clipping occurs.  If "ignore", no warning or
-        exception is generated is clipping occurs.
+        exception is generated if clipping occurs.
 
     Examples
     --------
