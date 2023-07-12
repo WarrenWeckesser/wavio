@@ -49,7 +49,7 @@ most cases.  In particular:
   exception.
 
 Examples
-~~~~~~~~
+--------
 
 The following examples are also found in the docstring of ``wavio.write``.
 
