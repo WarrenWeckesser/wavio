@@ -22,7 +22,7 @@ def get_wavio_version():
 
 # Get the long description from README.rst.
 _here = path.abspath(path.dirname(__file__))
-with open(path.join(_here, 'README.rst')) as f:
+with open(path.join(_here, 'README.md')) as f:
     _long_description = f.read()
 
 setup(
