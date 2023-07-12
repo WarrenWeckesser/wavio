@@ -48,25 +48,82 @@ most cases.  In particular:
   allows the generation of the warning to be disabled or converted to an
   exception.
 
-Example
-~~~~~~~
+Examples
+~~~~~~~~
 
-The following code (also found in the docstring of ``wavio.write``) writes
-a three second 440 Hz sine wave to a 24-bit WAV file::
+The following examples are also found in the docstring of ``wavio.write``.
 
-    import numpy as np
-    import wavio
+Create a 3 second 440 Hz sine wave, and save it in a 24-bit WAV file.
 
-    rate = 22050           # samples per second
-    T = 3                  # sample duration (seconds)
-    n = int(rate*T)        # number of samples
-    t = np.arange(n)/rate  # grid of time values
+  >>> import numpy as np
+  >>> import wavio
 
-    f = 440.0              # sound frequency (Hz)
-    x = np.sin(2*np.pi * f * t)
+  >>> rate = 22050           # samples per second
+  >>> T = 3                  # sample duration (seconds)
+  >>> n = int(rate*T)        # number of samples
+  >>> t = np.arange(n)/rate  # grid of time values
 
-    wavio.write("sine24.wav", x, rate, sampwidth=3)
+  >>> f = 440.0              # sound frequency (Hz)
+  >>> x = np.sin(2*np.pi * f * t)
 
+`x` is a single sine wave with amplitude 1, so we can use the default
+`scale`.
+
+  >>> wavio.write("sine24.wav", x, rate, sampwidth=3)
+
+Create a file that contains the 16 bit integer values -10000 and 10000
+repeated 100 times.  Use a sample rate of 8000.
+
+  >>> x = np.empty(200, dtype=np.int16)
+  >>> x[::2] = -10000
+  >>> x[1::2] = 10000
+  >>> wavio.write("foo.wav", x, 8000)
+
+Check that the file contains what we expect.  The values are checked
+for exact equality.  The input was an integer array, so the values are
+not scaled.
+
+  >>> w = wavio.read("foo.wav")
+  >>> np.all(w.data[:, 0] == x)
+  True
+
+Write floating point data to a 16 bit WAV file.  The floating point
+values are assumed to be within the range [-2, 2], and we want the
+values 2 and -2 to correspond to the full output range, even if the
+actual values in the data do not fill this range.  We do that by
+specifying `scale=2`.
+
+`T`, `rate` and `t` are from above.  The data is the sum of two
+sinusoids, with frequencies 440 and 880 Hz, modulated by a parabolic
+curve that is zero at the start and end of the data.
+
+  >>> envelope = (4/T**2)*(t * (T - t))
+  >>> omega1 = 2*np.pi*440
+  >>> omega2 = 2*np.pi*880
+  >>> y = envelope*(np.sin(omega1*t) + 0.3*np.sin(omega2*t + 0.2))
+  >>> y.min(), y.max()
+  (-1.1745469775555515, 1.093833464065767)
+
+Write the WAV file, with `scale=2`.
+
+  >>> wavio.write('harmonic.wav', y, rate, sampwidth=2, scale=2)
+
+Check the minimum and maximum integers that were actually written
+to the file:
+
+  >>> w = wavio.read("harmonic.wav")
+  >>> w.data.min(), w.data.max()
+  (-19243, 17921)
+
+If we want the WAV file to use as much of the range of the output
+integer type as possible (while still mapping 0.0 in the input to 0 in
+the output), we set `scale="auto"`.
+
+  >>> wavio.write('harmonic_full.wav', y, rate, sampwidth=2, scale="auto")
+
+  >>> w = wavio.read('harmonic_full.wav')
+  >>> w.data.min(), w.data.max()
+  (-32768, 30517)
 
 -----
 
