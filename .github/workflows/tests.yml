@@ -6,7 +6,6 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         numpy-version: ["1.19.5", "1.20.3", "1.21.6", "1.22.4", "1.23.5", "1.24.4", "1.25.2"]
@@ -35,7 +34,7 @@ jobs:
           numpy-version: "1.22.4"
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
