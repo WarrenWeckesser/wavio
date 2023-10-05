@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
         numpy-version: ["1.19.5", "1.20.3", "1.21.6", "1.22.4", "1.23.5", "1.24.4", "1.25.2", "1.26.0"]
         exclude:
         - python-version: "3.7"
@@ -36,6 +36,18 @@ jobs:
           numpy-version: "1.21.6"
         - python-version: "3.11"
           numpy-version: "1.22.4"
+        - python-version: "3.12"
+          numpy-version: "1.20.3"
+        - python-version: "3.12"
+          numpy-version: "1.21.6"
+        - python-version: "3.12"
+          numpy-version: "1.22.4"
+        - python-version: "3.12"
+          numpy-version: "1.23.5"
+        - python-version: "3.12"
+          numpy-version: "1.24.4"
+        - python-version: "3.12"
+          numpy-version: "1.25.2"
 
     steps:
     - uses: actions/checkout@v4
