@@ -43,7 +43,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.8.dev0"
+__version__ = "0.0.8"
 
 
 class ClippedDataWarning(UserWarning):
