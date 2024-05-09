@@ -43,7 +43,7 @@ import wave as _wave
 import numpy as _np
 
 
-__version__ = "0.0.9.dev0"
+__version__ = "0.0.9.dev1"
 
 
 class ClippedDataWarning(UserWarning):
@@ -446,7 +446,9 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
                 _warnings.warn(ClippedDataWarning())
             elif clip == "raise":
                 raise ClippedDataError()
-        data = data.clip(outmin, outmax).astype(outdtype)
+        clip_min = max(outmin, _np.iinfo(data.dtype).min)
+        clip_max = min(outmax, _np.iinfo(data.dtype).max)
+        data = data.clip(clip_min, clip_max).astype(outdtype)
     elif _np.issubdtype(data.dtype, _np.floating):
         data = _float_to_integer(data, sampwidth, scale=scale, clip=clip)
     else:

@@ -142,7 +142,8 @@ class TestWavio():
             wavio.write(filename, data, 44100, clip='ignore')
 
             check_basic(filename, nchannels=1, sampwidth=1, framerate=44100)
-            expected_data = data.clip(0, 255).astype(np.uint8)
+            int8max = np.iinfo(np.int8).max  # A long way to spell 127.
+            expected_data = data.clip(0, int8max).astype(np.uint8)
             check_wavio_read(filename, rate=44100, sampwidth=1,
                              dtype=np.uint8, shape=(len(data), 1),
                              data=expected_data)
