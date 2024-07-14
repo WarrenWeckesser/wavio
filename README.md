@@ -25,6 +25,9 @@ later is required.    The unit tests in ``wavio`` require ``pytest``.
 The API of the functions in ``wavio`` should not be considered stable.  There
 may be backwards-incompatible API changes between releases.
 
+The latest release of ``wavio`` is available on PyPI:
+https://pypi.org/project/wavio/
+
 *Important notice*
 
 In version 0.0.5, the data handling in ``wavio.write`` has been changed in
