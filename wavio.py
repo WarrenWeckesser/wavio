@@ -117,7 +117,7 @@ def _array2wav(a, sampwidth):
     return wavdata
 
 
-class Wav(object):
+class Wav:
     """
     Object returned by `wavio.read`.  Attributes are:
 
