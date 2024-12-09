@@ -38,12 +38,15 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 """
 
+from typing import BinaryIO, Literal, cast
 import warnings as _warnings
+from dataclasses import dataclass
 import wave as _wave
 import numpy as _np
+from numpy.typing import ArrayLike
 
 
-__version__ = "0.0.10dev1"
+__version__ = "0.0.10dev2"
 
 
 class ClippedDataWarning(UserWarning):
@@ -117,6 +120,7 @@ def _array2wav(a, sampwidth):
     return wavdata
 
 
+@dataclass(frozen=True, kw_only=True)
 class Wav:
     """
     Object returned by `wavio.read`.  Attributes are:
@@ -141,11 +145,9 @@ class Wav:
         For example, `sampwidth == 3` is a 24 bit WAV file.
 
     """
-
-    def __init__(self, data, rate, sampwidth):
-        self.data = data
-        self.rate = rate
-        self.sampwidth = sampwidth
+    data: _np.ndarray
+    rate: int
+    sampwidth: int
 
     def __repr__(self):
         s = ("Wav(data.shape=%s, data.dtype=%s, rate=%r, sampwidth=%r)" %
@@ -153,7 +155,7 @@ class Wav:
         return s
 
 
-def read(file):
+def read(file: BinaryIO | str) -> Wav:
     """
     Read a WAV file.
 
@@ -270,7 +272,15 @@ def _round_with_half_towards_zero(x):
     return s * _np.ceil(_np.abs(x) - 0.5)
 
 
-def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
+_sampwidth_t = Literal[1, 2, 3, 4]
+
+
+def write(file: BinaryIO | str,
+          data: ArrayLike,
+          rate: int,
+          scale: float | None = None,
+          sampwidth: _sampwidth_t | None = None,
+          clip: Literal["ignore", "warn", "raise"] = "warn") -> None:
     """
     Write the numpy array `data` to a WAV file.
 
@@ -422,13 +432,14 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
     if clip not in ["ignore", "warn", "raise"]:
         raise ValueError('clip must be one of "ignore", "warn" or "raise".')
 
-    data = _np.asarray(data)
+    data_arr = _np.asarray(data)
 
     if sampwidth is None:
-        if not _np.issubdtype(data.dtype, _np.integer) or data.itemsize > 4:
+        if (not _np.issubdtype(data_arr.dtype, _np.integer)
+                or data_arr.itemsize) > 4:
             raise ValueError('when data.dtype is not an 8-, 16-, or 32-bit '
                              'integer type, sampwidth must be specified.')
-        sampwidth = data.itemsize
+        sampwidth = cast(_sampwidth_t, data_arr.itemsize)
     else:
         if sampwidth not in [1, 2, 3, 4]:
             raise ValueError('sampwidth must be 1, 2, 3 or 4.')
@@ -436,41 +447,45 @@ def write(file, data, rate, scale=None, sampwidth=None, clip="warn"):
     outdtype = _sampwidth_dtypes[sampwidth]
     outmin, outmax = _sampwidth_minmax[sampwidth]
 
-    if _np.issubdtype(data.dtype, _np.integer):
+    if _np.issubdtype(data_arr.dtype, _np.integer):
         if scale is not None:
             raise ValueError('The scale parameter must not be set when the '
                              'input is an integer array.  No shifting or '
                              'scaling is done to integer input values.')
-        if (data.min() < outmin or data.max() > outmax):
+        if (data_arr.min() < outmin or data_arr.max() > outmax):
             if clip == "warn":
                 _warnings.warn(ClippedDataWarning())
             elif clip == "raise":
                 raise ClippedDataError()
-        clip_min = max(outmin, _np.iinfo(data.dtype).min)
-        clip_max = min(outmax, _np.iinfo(data.dtype).max)
-        data = data.clip(clip_min, clip_max).astype(outdtype)
-    elif _np.issubdtype(data.dtype, _np.floating):
-        data = _float_to_integer(data, sampwidth, scale=scale, clip=clip)
+        clip_min = max(outmin, _np.iinfo(data_arr.dtype).min)
+        clip_max = min(outmax, _np.iinfo(data_arr.dtype).max)
+        data_arr = data_arr.clip(clip_min, clip_max).astype(outdtype)
+    elif _np.issubdtype(data_arr.dtype, _np.floating):
+        data_arr = _float_to_integer(data_arr, sampwidth,
+                                     scale=scale, clip=clip)
     else:
-        raise TypeError(f'unsupported input array data type: {data.dtype}')
+        raise TypeError(f'unsupported input array data type: {data_arr.dtype}')
 
-    # At this point, `data` has been converted to have one of the following:
+    # At this point, `data_arr` has been converted to have one of the
+    # following dtypes:
+    #
     #    sampwidth   dtype
     #    ---------   -----
     #        1       uint8
     #        2       int16
     #        3       int32
     #        4       int32
-    # The values in `data` are in the form in which they will be saved;
+    #
+    # The values in `data_arr` are in the form in which they will be saved;
     # no more scaling will take place.
 
-    if data.ndim == 1:
-        data = data.reshape(-1, 1)
+    if data_arr.ndim == 1:
+        data_arr = data_arr.reshape(-1, 1)
 
-    wavdata = _array2wav(data, sampwidth)
+    wavdata = _array2wav(data_arr, sampwidth)
 
     w = _wave.open(file, 'wb')
-    w.setnchannels(data.shape[1])
+    w.setnchannels(data_arr.shape[1])
     w.setsampwidth(sampwidth)
     w.setframerate(rate)
     w.writeframes(wavdata)
