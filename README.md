@@ -17,9 +17,9 @@ does not support compressed WAV files, and it does not handle floating
 point WAV files.  When floating point data is passed to ``wavio.write`` it
 is converted to integers before being written to the WAV file.
 
-``wavio`` requires Python 3.7 or later.
+``wavio`` requires Python 3.10 or later.
 
-``wavio`` depends on numpy (http://www.numpy.org).  NumPy version 1.19.0 or
+``wavio`` depends on numpy (http://www.numpy.org).  NumPy version 1.21.3 or
 later is required.    The unit tests in ``wavio`` require ``pytest``.
 
 The API of the functions in ``wavio`` should not be considered stable.  There

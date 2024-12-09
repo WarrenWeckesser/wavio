@@ -38,16 +38,14 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
     ],
     keywords="wav numpy",
     py_modules=["wavio"],
     install_requires=[
-        'numpy >= 1.19.0',
+        'numpy >= 1.21.3',
     ],
 )
