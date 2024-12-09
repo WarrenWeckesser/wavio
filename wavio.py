@@ -278,7 +278,7 @@ _sampwidth_t = Literal[1, 2, 3, 4]
 def write(file: BinaryIO | str,
           data: ArrayLike,
           rate: int,
-          scale: float | None = None,
+          scale: float | Literal["auto"] | None = None,
           sampwidth: _sampwidth_t | None = None,
           clip: Literal["ignore", "warn", "raise"] = "warn") -> None:
     """
@@ -325,7 +325,7 @@ def write(file: BinaryIO | str,
 
         For any other data types, or to write a 24 bit file, `sampwidth`
         must be given.
-    scale : float, optional
+    scale : float | Literal["auto"], optional
         This controls the output range when the input is floating point.
         `scale` must not be given when the input data has integer data
         type.
