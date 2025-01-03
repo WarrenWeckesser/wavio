@@ -6,13 +6,15 @@ import wave
 import numpy as np
 import wavio
 
+int32le = np.dtype('<i4')
+int16le = np.dtype('<i2')
 
 data1 = np.array([1, -2,
                   3, -4,
                   2**16, -2**16,
                   -2**20, 2**20,
                   2**23-1, -2**23],
-                 dtype=np.int32)
+                 dtype=int32le)
 
 
 def check_basic(filename, nchannels, sampwidth, framerate):
@@ -45,7 +47,7 @@ class TestWavio():
             check_basic(filename, nchannels=1, sampwidth=3,
                         framerate=44100)
             check_wavio_read(filename, rate=44100, sampwidth=3,
-                             dtype=np.int32, shape=(len(data1), 1),
+                             dtype=int32le, shape=(len(data1), 1),
                              data=data1)
 
     @pytest.mark.parametrize('data', [data1[:, None],
@@ -59,7 +61,7 @@ class TestWavio():
             check_basic(filename, nchannels=data.shape[1], sampwidth=3,
                         framerate=44100)
             check_wavio_read(filename, rate=44100, sampwidth=3,
-                             dtype=np.int32, shape=data.shape,
+                             dtype=int32le, shape=data.shape,
                              data=data)
 
     def test2(self):
@@ -71,42 +73,42 @@ class TestWavio():
 
             check_basic(filename, nchannels=2, sampwidth=3, framerate=44100)
             check_wavio_read(filename, rate=44100, sampwidth=3,
-                             dtype=np.int32, shape=data2.shape,
+                             dtype=int32le, shape=data2.shape,
                              data=data2)
 
     def test3(self):
         filename = 'test3data.wav'
         with tempfile.TemporaryDirectory() as d:
             os.chdir(d)
-            data = np.zeros(32, dtype=np.int16)
+            data = np.zeros(32, dtype=int16le)
             data[1::4] = 10000
             data[3::4] = -10000
             wavio.write(filename, data, 44100)
 
             check_basic(filename, nchannels=1, sampwidth=2, framerate=44100)
             check_wavio_read(filename, rate=44100, sampwidth=2,
-                             dtype=np.int16, shape=(32, 1),
+                             dtype=int16le, shape=(32, 1),
                              data=data)
 
     def test5(self):
         filename = 'test5data.wav'
         with tempfile.TemporaryDirectory() as d:
             os.chdir(d)
-            data = np.zeros(32, dtype=np.int16)
+            data = np.zeros(32, dtype=int16le)
             data[1::4] = 10000
             data[3::4] = -10000
             wavio.write(filename, data, 44100, sampwidth=2)
 
             check_basic(filename, nchannels=1, sampwidth=2, framerate=44100)
             check_wavio_read(filename, rate=44100, sampwidth=2,
-                             dtype=np.int16, shape=(32, 1),
+                             dtype=int16le, shape=(32, 1),
                              data=data.reshape(-1, 1))
 
     def test6(self):
         filename = 'test6data.wav'
         with tempfile.TemporaryDirectory() as d:
             os.chdir(d)
-            data = np.zeros(32, dtype=np.int16)
+            data = np.zeros(32, dtype=int16le)
             data[1::4] = 10000
             data[3::4] = -10000
             wavio.write(filename, data, 44100, sampwidth=1, clip='ignore')
@@ -169,12 +171,12 @@ class TestWavio():
         with tempfile.TemporaryDirectory() as d:
             os.chdir(d)
             data = np.array([-2**15, -2**8, -1, 0, 1, 2**8, 2**15-1],
-                            dtype=np.int16)
+                            dtype=int16le)
             wavio.write(filename, data, 44100)
 
             check_basic(filename, nchannels=1, sampwidth=2, framerate=44100)
             check_wavio_read(filename, rate=44100, sampwidth=2,
-                             dtype=np.int16, shape=(len(data), 1),
+                             dtype=int16le, shape=(len(data), 1),
                              data=data.reshape(-1, 1))
 
     def test_24bit_full_range_round_trip(self):
@@ -183,12 +185,12 @@ class TestWavio():
         with tempfile.TemporaryDirectory() as d:
             os.chdir(d)
             data = np.array([-2**23, -2**16, -1, 0, 1, 2**16, 2**23-1],
-                            dtype=np.int32)
+                            dtype=int32le)
             wavio.write(filename, data, 44100, sampwidth=3)
 
             check_basic(filename, nchannels=1, sampwidth=3, framerate=44100)
             check_wavio_read(filename, rate=44100, sampwidth=3,
-                             dtype=np.int32, shape=(len(data), 1),
+                             dtype=int32le, shape=(len(data), 1),
                              data=data.reshape(-1, 1))
 
     def test_32bit_full_range_round_trip(self):
@@ -197,12 +199,12 @@ class TestWavio():
         with tempfile.TemporaryDirectory() as d:
             os.chdir(d)
             data = np.array([-2**31, -2**16, -1, 0, 1, 2**16, 2**31-1],
-                            dtype=np.int32)
+                            dtype=int32le)
             wavio.write(filename, data, 44100)
 
             check_basic(filename, nchannels=1, sampwidth=4, framerate=44100)
             check_wavio_read(filename, rate=44100, sampwidth=4,
-                             dtype=np.int32, shape=(len(data), 1),
+                             dtype=int32le, shape=(len(data), 1),
                              data=data.reshape(-1, 1))
 
     def test_clipping_exception_float(self):
