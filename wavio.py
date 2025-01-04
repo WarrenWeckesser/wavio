@@ -205,13 +205,12 @@ def read(file: BinaryIO | str) -> Wav:
     contains 24 bit samples, the resulting numpy array is 32 bit integers,
     with values that have been sign-extended.
     """
-    wav = _wave.open(file)
-    rate = wav.getframerate()
-    nchannels = wav.getnchannels()
-    sampwidth = wav.getsampwidth()
-    nframes = wav.getnframes()
-    data = wav.readframes(nframes)
-    wav.close()
+    with _wave.open(file) as wav:
+        rate = wav.getframerate()
+        nchannels = wav.getnchannels()
+        sampwidth = wav.getsampwidth()
+        nframes = wav.getnframes()
+        data = wav.readframes(nframes)
     array = _wav2array(nchannels, sampwidth, data)
     w = Wav(data=array, rate=rate, sampwidth=sampwidth)
     return w
@@ -484,9 +483,8 @@ def write(file: BinaryIO | str,
 
     wavdata = _array2wav(data_arr, sampwidth)
 
-    w = _wave.open(file, 'wb')
-    w.setnchannels(data_arr.shape[1])
-    w.setsampwidth(sampwidth)
-    w.setframerate(rate)
-    w.writeframes(wavdata)
-    w.close()
+    with _wave.open(file, 'wb') as w:
+        w.setnchannels(data_arr.shape[1])
+        w.setsampwidth(sampwidth)
+        w.setframerate(rate)
+        w.writeframes(wavdata)
