@@ -32,7 +32,7 @@ setup(
     description=("A Python module for reading and writing WAV files using "
                  "numpy arrays."),
     long_description=_long_description,
-    license="BSD",
+    license="BSD-2-Clause",
     url="https://github.com/WarrenWeckesser/wavio",
     classifiers=[
         "License :: OSI Approved :: BSD License",
